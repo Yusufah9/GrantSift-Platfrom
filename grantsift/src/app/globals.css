@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    background-color: #efeee7;
+  }
+
+  body {
+    @apply bg-paper text-ink antialiased;
+  }
+
+  ::selection {
+    background-color: #b4661e;
+    color: #efeee7;
+  }
+
+  :focus-visible {
+    outline: 2px solid #b4661e;
+    outline-offset: 2px;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    background: #191c19;
+    color: #efeee7;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+  }
+  .skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .rule {
+    @apply border-paper-line;
+  }
+
+  .stamp-badge {
+    @apply inline-flex items-center gap-1.5 border border-current px-2 py-0.5 text-[11px] font-mono tracking-wide;
+  }
+
+  .article-content h1,
+  .article-content h2,
+  .article-content h3 {
+    @apply mt-8 mb-3 font-serif text-ink;
+  }
+  .article-content h1 { @apply text-2xl; }
+  .article-content h2 { @apply text-xl; }
+  .article-content h3 { @apply text-lg; }
+  .article-content p { @apply mb-4 leading-relaxed; }
+  .article-content ul { @apply mb-4 list-disc pl-6; }
+  .article-content ol { @apply mb-4 list-decimal pl-6; }
+  .article-content a { @apply text-stamp-dark underline; }
+  .article-content blockquote { @apply my-4 border-l-2 border-paper-line pl-4 italic text-ink-faint; }
+  .article-content code { @apply bg-paper-raised px-1 py-0.5 font-mono text-sm; }
+  .article-content pre { @apply my-4 overflow-x-auto bg-ink p-4 text-paper; }
+  .article-content pre code { @apply bg-transparent p-0; }
+  .article-content img { @apply my-4 max-w-full; }
+}
