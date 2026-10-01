@@ -32,3 +32,4 @@ test.describe("public site smoke test", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 });
+

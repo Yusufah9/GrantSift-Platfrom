@@ -151,3 +151,4 @@ export function createFakeSupabase(seed: Record<string, Row[]> = {}) {
     },
   };
 }
+

@@ -50,3 +50,4 @@ test.describe("project creation", () => {
     await expect(page).toHaveURL(/\/projects\/[\w-]+$/);
   });
 });
+

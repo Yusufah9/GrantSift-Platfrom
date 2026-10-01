@@ -24,6 +24,28 @@ export default function SignUpPage() {
   const [passwordValue, setPasswordValue] = useState("");
   const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
   const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [targetPrompt, setTargetPrompt] = useState<string | null>(null);
+
+  useState(() => {
+    // initialize safely on mount
+  });
+
+  // Client-side read of target query without causing SSR hydration mismatches
+  useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get("q");
+        if (q) {
+          setTargetPrompt(q);
+          sessionStorage.setItem("grantsift_initial_prompt", q);
+        } else {
+          const stored = sessionStorage.getItem("grantsift_initial_prompt");
+          if (stored) setTargetPrompt(stored);
+        }
+      } catch {}
+    }
+  });
 
   async function handleResend(email: string) {
     setResendStatus("sending");
@@ -110,6 +132,16 @@ export default function SignUpPage() {
         </>
       }
     >
+      {targetPrompt && (
+        <div className="rounded-md border border-paper-line bg-paper/70 p-3 text-xs text-ink-soft flex items-start gap-2.5">
+          <span className="text-base leading-none">🎯</span>
+          <div className="flex-1 min-w-0">
+            <span className="font-semibold text-ink">Saved grant goal:</span>
+            <p className="mt-0.5 text-[11px] text-ink-soft truncate italic">&ldquo;{targetPrompt}&rdquo;</p>
+          </div>
+        </div>
+      )}
+
       <GoogleButton label="Sign up with Google" />
 
       <div className="flex items-center gap-3 text-xs text-ink-faint">
@@ -163,3 +195,4 @@ export default function SignUpPage() {
     </AuthShell>
   );
 }
+

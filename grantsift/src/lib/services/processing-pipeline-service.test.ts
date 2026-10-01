@@ -42,3 +42,4 @@ describe("describeError", () => {
     expect(result).toEqual({ code: "PROCESSING_ERROR", message: "Unknown error" });
   });
 });
+

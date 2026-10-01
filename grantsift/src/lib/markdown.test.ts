@@ -25,3 +25,4 @@ describe("renderMarkdown", () => {
     expect(html).not.toContain("javascript:");
   });
 });
+

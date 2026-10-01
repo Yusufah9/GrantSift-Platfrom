@@ -45,3 +45,4 @@ describe("describeOrgProfile", () => {
     expect(describeOrgProfile(empty as Project)).toBe("No organization profile details were provided.");
   });
 });
+

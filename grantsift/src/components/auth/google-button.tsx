@@ -127,3 +127,4 @@ export function GoogleButton({ label = "Continue with Google", redirectTo }: Goo
     </div>
   );
 }
+

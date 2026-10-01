@@ -66,3 +66,4 @@ export class PostRepository {
     if (error) throw error;
   }
 }
+

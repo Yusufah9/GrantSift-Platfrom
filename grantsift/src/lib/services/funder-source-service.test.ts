@@ -36,3 +36,4 @@ describe("assertFetchableUrl", () => {
     expect(() => assertFetchableUrl("http://8.8.8.8")).not.toThrow();
   });
 });
+

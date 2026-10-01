@@ -157,3 +157,4 @@ export class BlogService {
 export function slugFromTitle(title: string): string {
   return slugify(title, { lower: true, strict: true });
 }
+

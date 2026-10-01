@@ -47,3 +47,4 @@ export function SopTable({ projectId, tasks }: { projectId: string; tasks: SopTa
     </div>
   );
 }
+

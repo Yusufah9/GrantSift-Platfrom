@@ -15,7 +15,7 @@ export function AuthShell({
     <main
       id="main-content"
       className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-16"
-      style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #2c1810 40%, #1a1208 100%)" }}
+      style={{ background: "radial-gradient(ellipse 80% 60% at 50% 0%, #2b2a27 0%, #0a0a0a 70%)" }}
     >
       {/* Decorative ambient glow */}
       <div
@@ -23,7 +23,7 @@ export function AuthShell({
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 50% at 30% 20%, rgba(180,102,30,0.18) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 80% 80%, rgba(46,92,75,0.12) 0%, transparent 70%)",
+            "radial-gradient(ellipse 60% 40% at 30% 20%, rgba(243,241,234,0.10) 0%, transparent 70%)",
         }}
       />
 
@@ -101,3 +101,4 @@ export function AuthShell({
     </main>
   );
 }
+

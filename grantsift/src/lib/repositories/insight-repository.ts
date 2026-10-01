@@ -23,3 +23,4 @@ export class InsightRepository {
     if (error) throw error;
   }
 }
+

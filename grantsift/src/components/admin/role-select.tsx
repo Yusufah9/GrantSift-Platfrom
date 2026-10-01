@@ -23,3 +23,4 @@ export function RoleSelect({ userId, role }: { userId: string; role: "user" | "a
     </select>
   );
 }
+

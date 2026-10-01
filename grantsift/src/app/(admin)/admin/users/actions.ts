@@ -15,3 +15,4 @@ export async function setUserRoleAction(userId: string, role: "user" | "admin"):
   revalidatePath("/admin/users");
   return ok(null);
 }
+

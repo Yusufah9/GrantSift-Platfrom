@@ -55,3 +55,4 @@ export class ExtractionService {
     return result.insights;
   }
 }
+

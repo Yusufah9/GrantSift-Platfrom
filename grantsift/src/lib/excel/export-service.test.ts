@@ -150,3 +150,4 @@ describe("ExportService.buildWorkbook", () => {
     expect(() => new ExportService().buildWorkbook(empty)).not.toThrow();
   });
 });
+

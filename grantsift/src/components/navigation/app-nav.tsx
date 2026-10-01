@@ -3,9 +3,9 @@ import { logoutAction } from "@/app/(auth)/actions";
 
 export function AppNav({ email, isAdmin }: { email: string; isAdmin: boolean }) {
   return (
-    <header className="border-b border-paper-line">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/dashboard" className="font-serif text-lg text-ink">
+    <header className="sticky top-3 z-40 mx-auto mt-3 max-w-6xl px-3">
+      <div className="flex items-center justify-between rounded-full border border-ink/10 bg-paper-raised/80 py-2 pl-5 pr-4 backdrop-blur-xl">
+        <Link href="/dashboard" className="text-lg font-bold tracking-tight text-ink">
           GrantSift
         </Link>
         <div className="flex items-center gap-4 text-sm text-ink-soft">
@@ -25,3 +25,4 @@ export function AppNav({ email, isAdmin }: { email: string; isAdmin: boolean }) 
     </header>
   );
 }
+

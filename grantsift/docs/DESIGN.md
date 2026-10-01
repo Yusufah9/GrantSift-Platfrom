@@ -49,3 +49,4 @@ bordered rectangles, like sheets in a folder.
 One accent color. No gradients. No per-card shadow. Motion limited to hover
 states and simple color transitions — no scroll-triggered fade-and-slide.
 `prefers-reduced-motion` is respected globally in `globals.css`.
+

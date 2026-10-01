@@ -27,3 +27,4 @@ export function PostStatusSelect({ postId, status }: { postId: string; status: P
     </select>
   );
 }
+

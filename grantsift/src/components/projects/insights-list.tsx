@@ -49,3 +49,4 @@ export function InsightsList({ insights }: { insights: Insight[] }) {
     </div>
   );
 }
+

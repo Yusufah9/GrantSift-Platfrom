@@ -101,3 +101,4 @@ export class YouTubeDiscoveryService {
     return json.items?.[0]?.status?.privacyStatus === "public";
   }
 }
+

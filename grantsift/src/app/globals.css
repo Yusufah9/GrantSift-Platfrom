@@ -8,20 +8,21 @@
   }
 
   html {
-    background-color: #efeee7;
+    background-color: #f3f1ea;
   }
 
   body {
     @apply bg-paper text-ink antialiased;
+    letter-spacing: -0.011em;
   }
 
   ::selection {
-    background-color: #b4661e;
-    color: #efeee7;
+    background-color: #0a0a0a;
+    color: #f3f1ea;
   }
 
   :focus-visible {
-    outline: 2px solid #b4661e;
+    outline: 2px solid #0a0a0a;
     outline-offset: 2px;
   }
 
@@ -30,8 +31,8 @@
     left: -9999px;
     top: 0;
     z-index: 100;
-    background: #191c19;
-    color: #efeee7;
+    background: #0a0a0a;
+    color: #f3f1ea;
     padding: 0.75rem 1.25rem;
     font-size: 0.875rem;
   }
@@ -53,12 +54,18 @@
 }
 
 @layer components {
+  .display { @apply font-semibold text-ink; letter-spacing: -0.045em; line-height: 0.98; }
+  .clay-card { @apply rounded-2xl bg-paper-raised; box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 30px 60px -40px rgba(10,10,10,.25); }
+  .btn-ink { @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-3.5 text-sm font-semibold text-paper transition-transform duration-200 hover:scale-[1.03]; }
+  .btn-milk { @apply inline-flex items-center justify-center gap-2 rounded-full bg-paper-raised px-6 py-3.5 text-sm font-semibold text-ink transition-transform duration-200 hover:scale-[1.03]; }
+  .btn-line { @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/20 px-6 py-3.5 text-sm font-semibold text-ink transition-colors hover:border-ink; }
+  .ball-field { background-color: #0a0a0a; background-image: radial-gradient(circle at 35% 30%, #fff 0 10%, #d9d6cb 11% 55%, #8e8b82 100%); background-size: 34px 34px; }
   .rule {
     @apply border-paper-line;
   }
 
   .stamp-badge {
-    @apply inline-flex items-center gap-1.5 border border-current px-2 py-0.5 text-[11px] font-mono tracking-wide;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-current px-3 py-1 text-xs font-medium;
   }
 
   .article-content h1,
@@ -72,10 +79,11 @@
   .article-content p { @apply mb-4 leading-relaxed; }
   .article-content ul { @apply mb-4 list-disc pl-6; }
   .article-content ol { @apply mb-4 list-decimal pl-6; }
-  .article-content a { @apply text-stamp-dark underline; }
+  .article-content a { @apply text-ink underline; }
   .article-content blockquote { @apply my-4 border-l-2 border-paper-line pl-4 italic text-ink-faint; }
   .article-content code { @apply bg-paper-raised px-1 py-0.5 font-mono text-sm; }
   .article-content pre { @apply my-4 overflow-x-auto bg-ink p-4 text-paper; }
   .article-content pre code { @apply bg-transparent p-0; }
   .article-content img { @apply my-4 max-w-full; }
 }
+

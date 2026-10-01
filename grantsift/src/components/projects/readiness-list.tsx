@@ -40,3 +40,4 @@ export function ReadinessList({ items }: { items: ReadinessItem[] }) {
     </div>
   );
 }
+

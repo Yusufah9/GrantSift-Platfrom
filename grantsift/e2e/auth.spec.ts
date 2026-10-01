@@ -37,3 +37,4 @@ test.describe("auth flow", () => {
     await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
   });
 });
+

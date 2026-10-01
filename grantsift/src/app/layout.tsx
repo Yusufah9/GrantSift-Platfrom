@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
-import { Source_Serif_4, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Schibsted_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const sourceSerif = Source_Serif_4({
+const grotesk = Schibsted_Grotesk({
   subsets: ["latin"],
-  variable: "--font-source-serif",
-  display: "swap",
-});
-
-const ibmPlexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-ibm-plex",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-grotesk",
   display: "swap",
 });
 
@@ -23,14 +17,14 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GrantSift · Grant readiness, organized",
+  title: "GrantSift: grant funding, made clear",
   description:
-    "Analyze a funder, see what your organization is missing, and build a working application plan with sources you can check.",
+    "GrantSift finds grant opportunities, reads donor guidelines for you, and turns them into a plan you can act on. Built for founders, researchers, NGOs and grant offices across Africa.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sourceSerif.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
+    <html lang="en" className={`${grotesk.variable} ${ibmPlexMono.variable}`}>
       <body className="font-sans">
         <a href="#main-content" className="skip-link">
           Skip to content
@@ -40,3 +34,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+

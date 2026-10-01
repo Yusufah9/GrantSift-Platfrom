@@ -43,3 +43,4 @@ export function fail(error: unknown): ApiResponse<never> {
     error: { code: "PROCESSING_ERROR", message: "Something went wrong. Please try again." },
   };
 }
+

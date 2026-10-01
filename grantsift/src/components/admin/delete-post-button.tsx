@@ -25,3 +25,4 @@ export function DeletePostButton({ postId }: { postId: string }) {
     </button>
   );
 }
+

@@ -334,3 +334,4 @@ function renderEmailTemplate({
 </body>
 </html>`;
 }
+

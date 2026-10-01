@@ -50,3 +50,4 @@ API quota and depends on a specific funder actually having YouTube
 coverage, so it isn't a good fit for a repeatable CI-style check. Test it
 manually against a funder you know has recipient videos before every
 release, and consider a mocked-Gemini variant if you want it automated.
+

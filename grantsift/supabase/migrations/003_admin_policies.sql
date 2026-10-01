@@ -13,3 +13,4 @@ create policy "profiles: admin update role" on profiles for update
 -- owner-only (see "projects: owner full access" in 001_initial_schema.sql).
 create policy "projects: admin read all" on projects for select
   using (exists (select 1 from profiles pr where pr.id = auth.uid() and pr.role = 'admin'));
+

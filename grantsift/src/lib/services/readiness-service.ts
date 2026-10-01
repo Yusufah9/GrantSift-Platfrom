@@ -113,3 +113,4 @@ export function describeOrgProfile(project: Database["public"]["Tables"]["projec
   if (project.org_traction) lines.push(`Traction: ${project.org_traction}`);
   return lines.length > 0 ? lines.join("\n") : "No organization profile details were provided.";
 }
+

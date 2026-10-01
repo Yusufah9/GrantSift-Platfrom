@@ -42,3 +42,4 @@ describe("isValidSenderAddress", () => {
     expect(isValidSenderAddress("")).toBe(false);
   });
 });
+

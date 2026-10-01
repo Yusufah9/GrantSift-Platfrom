@@ -100,3 +100,4 @@ async function ensureProfile(userId: string, fullName?: string | null): Promise<
     return false;
   }
 }
+

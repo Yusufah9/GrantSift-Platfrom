@@ -58,3 +58,4 @@ Processing is called from route handlers today but is not aware of the
 transport. Moving `ProcessingPipelineService` behind a queue (e.g. a Vercel
 cron-triggered worker or an external queue) later means swapping the
 trigger, not rewriting the pipeline.
+

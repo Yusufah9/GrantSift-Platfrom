@@ -25,3 +25,4 @@ export function SourceBadge({ kind }: { kind: keyof typeof STYLES }) {
     </span>
   );
 }
+

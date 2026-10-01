@@ -57,3 +57,4 @@ export const youtubeUrlSchema = z
 
 export type OrganizationProfileInput = z.infer<typeof organizationProfileSchema>;
 export type GrantTargetInput = z.infer<typeof grantTargetSchema>;
+

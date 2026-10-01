@@ -87,3 +87,4 @@ export class FunderSourceService {
     return { sourceUrl: url.toString(), title, rawText };
   }
 }
+

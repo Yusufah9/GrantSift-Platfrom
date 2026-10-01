@@ -280,3 +280,4 @@ create policy "posts: admin update" on posts for update
 
 create policy "posts: admin delete" on posts for delete
   using (exists (select 1 from profiles pr where pr.id = auth.uid() and pr.role = 'admin'));
+

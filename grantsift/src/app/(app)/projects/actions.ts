@@ -36,3 +36,4 @@ export async function createProjectAction(formData: FormData): Promise<ApiRespon
 
   redirect(`/projects/${project.id}`);
 }
+
