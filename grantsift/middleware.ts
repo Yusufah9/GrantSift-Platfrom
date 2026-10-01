@@ -4,6 +4,16 @@ import { NextResponse, type NextRequest } from "next/server";
 const PROTECTED_PREFIXES = ["/dashboard", "/projects", "/admin"];
 
 export async function middleware(request: NextRequest) {
+  // If Supabase OAuth redirects to root or any non-callback URL with ?code=, forward to /auth/callback
+  if (
+    request.nextUrl.searchParams.has("code") &&
+    request.nextUrl.pathname !== "/auth/callback"
+  ) {
+    const callbackUrl = new URL("/auth/callback", request.url);
+    callbackUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(callbackUrl);
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

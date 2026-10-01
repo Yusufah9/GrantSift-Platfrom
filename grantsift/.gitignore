@@ -4,6 +4,7 @@ out/
 build/
 .env
 .env.local
+.env.example
 .env.production
 .vercel
 *.log

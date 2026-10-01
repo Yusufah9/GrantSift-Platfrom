@@ -1,0 +1,26 @@
+# Environment variables
+.env
+.env*.local
+.env.local
+.env.example
+.env.production
+**/.env
+**/.env*.local
+**/.env.local
+**/.env.example
+**/.env.production
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build artifacts
+.next/
+**/.next/
+out/
+build/
+.vercel/
+*.log
+.DS_Store
+coverage/
+tsconfig.tsbuildinfo

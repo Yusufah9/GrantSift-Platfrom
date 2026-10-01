@@ -7,8 +7,8 @@ import { requireEnv } from "@/lib/config";
 type ModelTier = "fast" | "synthesis";
 
 const MODEL_BY_TIER: Record<ModelTier, string> = {
-  fast: process.env.GEMINI_MODEL_FAST ?? "gemini-1.5-flash",
-  synthesis: process.env.GEMINI_MODEL_SYNTHESIS ?? "gemini-1.5-pro",
+  fast: process.env.GEMINI_MODEL_FAST ?? "gemini-3.8-flash",
+  synthesis: process.env.GEMINI_MODEL_SYNTHESIS ?? "gemini-3.8-flash",
 };
 
 /**
@@ -54,7 +54,16 @@ export class GeminiService {
         if (isRateLimit(cause)) {
           throw new AppError(
             "RATE_LIMIT_ERROR",
-            "Grant analysis is temporarily rate limited. Please try again shortly.",
+            "Grant analysis is temporarily rate limited. Please try again in a few minutes.",
+            cause,
+          );
+        }
+        if (isOverloaded(cause)) {
+          // 503 means the model is temporarily busy — retry once before giving up
+          if (attempt < maxRetries) continue;
+          throw new AppError(
+            "RATE_LIMIT_ERROR",
+            "The AI model is experiencing high demand right now. Please try again in a moment.",
             cause,
           );
         }
@@ -97,4 +106,8 @@ function isTimeout(cause: unknown): boolean {
 
 function isRateLimit(cause: unknown): boolean {
   return cause instanceof Error && /429|quota|rate/i.test(cause.message);
+}
+
+function isOverloaded(cause: unknown): boolean {
+  return cause instanceof Error && /503|overload|high demand|service unavailable/i.test(cause.message);
 }

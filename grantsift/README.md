@@ -89,20 +89,17 @@ running in a terminal when you test this — a stopped dev server produces
 the same "connection refused" page.
 
 ## Email
-Two separate email flows exist, and only one is configured by default:
+All application emails (account confirmation links, password reset links, password updated notifications, and welcome emails) are delivered through Brevo:
 
-- **Account confirmation** (the "confirm your email" link after signup) is
-  sent automatically by Supabase Auth itself, using Supabase's built-in
-  mailer, with no setup required. It's rate-limited (a handful of emails
-  per hour) and meant for development only — for production, set up a
-  custom SMTP provider under Supabase → Authentication → Emails → SMTP
-  Settings, or your emails will stop sending under any real signup volume.
-- **The welcome email** GrantSift itself sends after signup (see
-  `src/lib/email/email-service.ts`) uses `EMAIL_PROVIDER` /
-  `RESEND_API_KEY` from your `.env.local`. Until those are set, it logs to
-  your terminal instead of sending (`[email:noop] Would send...`) — that's
-  expected in local dev, not an error. Set `EMAIL_PROVIDER=resend` and a
-  real `RESEND_API_KEY` to actually receive it.
+- **Email Provider**: Brevo SMTP Relay (`smtp-relay.brevo.com:587`)
+- **Credentials**:
+  - `EMAIL_PROVIDER=brevo`
+  - `BREVO_SMTP_SERVER=smtp-relay.brevo.com`
+  - `BREVO_SMTP_PORT=587`
+  - `BREVO_SMTP_USER=bc10e8001@smtp-brevo.com`
+  - `BREVO_SMTP_KEY=your-brevo-smtp-key`
+  - `EMAIL_FROM=GrantSift <bc10e8001@smtp-brevo.com>`
+- **Fallback**: If `EMAIL_PROVIDER` is unset or credentials are missing in local dev, it logs cleanly to the terminal (`[email:noop] Would send...`) without crashing.
 
 ## Password reset
 The emailed reset link carries a one-time session in the URL itself, which
