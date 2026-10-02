@@ -55,6 +55,7 @@
 
 @layer components {
   .display { @apply font-semibold text-ink; letter-spacing: -0.045em; line-height: 0.98; }
+  .landing-container { @apply mx-auto w-full max-w-[1400px] px-3 md:px-5; }
   .clay-card { @apply rounded-2xl bg-paper-raised; box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 30px 60px -40px rgba(10,10,10,.25); }
   .btn-ink { @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-3.5 text-sm font-semibold text-paper transition-transform duration-200 hover:scale-[1.03]; }
   .btn-milk { @apply inline-flex items-center justify-center gap-2 rounded-full bg-paper-raised px-6 py-3.5 text-sm font-semibold text-ink transition-transform duration-200 hover:scale-[1.03]; }

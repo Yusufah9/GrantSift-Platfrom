@@ -36,7 +36,7 @@ export function ProblemSolution() {
   const [i, setI] = useState(0);
   const p = PAINS[i]!;
   return (
-    <section id="product" className="mx-auto max-w-6xl px-6 py-24 md:py-32">
+    <section id="product" className="landing-container py-24 md:py-32">
       <div className="grid gap-10 md:grid-cols-[1fr_1.1fr] md:items-end">
         <h2 className="display text-5xl md:text-7xl">We know how hard grant funding is to secure in Africa.</h2>
         <p className="max-w-md text-lg text-ink-soft">

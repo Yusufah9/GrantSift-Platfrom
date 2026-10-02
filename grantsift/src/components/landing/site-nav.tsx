@@ -46,13 +46,7 @@ export function SiteNav() {
 
   return (
     <>
-      <div className="bg-paper-raised px-4 py-2 text-center text-sm text-ink-soft">
-        Built for grant seekers across Africa.{" "}
-        <Link href="/about" className="font-semibold text-ink underline underline-offset-4">
-          See why we made GrantSift
-        </Link>
-      </div>
-      <header className="sticky top-3 z-50 mx-auto mt-3 max-w-6xl px-3">
+      <header className="sticky top-3 z-50 landing-container">
         <div className="flex items-center justify-between rounded-full border border-ink/10 bg-paper-raised/80 py-2 pl-5 pr-2 backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <span aria-hidden className="h-6 w-6 rounded-full" style={{ background: "radial-gradient(circle at 32% 26%, #6b6962, #0a0a0a 65%)" }} />

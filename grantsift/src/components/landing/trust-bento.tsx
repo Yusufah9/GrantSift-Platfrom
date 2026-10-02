@@ -6,7 +6,7 @@ const Tile = ({ className = "", children }: { className?: string; children: Reac
 
 export function TrustBento() {
   return (
-    <section className="mx-auto max-w-5xl px-6 pb-24 pt-8">
+    <section className="landing-container pb-24 pt-8">
       <p className="mx-auto max-w-xl text-center text-lg text-ink-soft">
         Made for grant teams of every size. Shaped by the people who write, review and report on applications. Built with care.
       </p>

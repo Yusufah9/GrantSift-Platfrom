@@ -17,7 +17,7 @@ export function ProductMock() {
   const ready = rows.filter((r) => r.s === 0).length;
   const cycle = (i: number) => setRows((rs) => rs.map((r, n) => (n === i ? { ...r, s: (r.s + 1) % 3 } : r)));
   return (
-    <section className="mx-auto max-w-6xl px-6 pb-24 md:pb-32">
+    <section className="landing-container pb-24 md:pb-32">
       <h2 className="display mx-auto max-w-3xl text-center text-4xl md:text-6xl">See the gaps before the funder does.</h2>
       <p className="mx-auto mt-5 max-w-xl text-center text-lg text-ink-soft">Try it. Click any status to see how a readiness check changes as you add evidence.</p>
       <div className="mt-12 grid gap-4 md:grid-cols-[320px_1fr]">

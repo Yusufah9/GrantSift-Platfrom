@@ -41,9 +41,9 @@ export function Hero() {
   };
 
   return (
-    <section className="px-3 pt-3 md:px-5">
+    <section className="landing-container pt-3">
       <ClayStage
-        className="mx-auto min-h-[640px] max-w-[1400px] rounded-[44px] md:min-h-[720px]"
+        className="min-h-[640px] w-full rounded-[44px] md:min-h-[720px]"
         items={[
           { node: <Cube size={150} tone="milk" />, x: "58%", y: "12%", depth: 26, float: true },
           { node: <Sphere size={110} tone="ink" />, x: "12%", y: "14%", depth: 40, float: true },
