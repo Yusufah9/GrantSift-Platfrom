@@ -4,10 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { calculateReadinessScore, type ScorecardInput } from "@/lib/services/scorecard-service";
 import { downloadScorecardExcel } from "@/lib/excel/scorecard-export";
+import { WebResearchPanel } from "@/components/research/web-research-panel";
 
 export default function OrganizationWorkspacePage() {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "profile" | "scorecard" | "documents" | "sops" | "approvals" | "analytics"
+    "overview" | "research" | "profile" | "scorecard" | "documents" | "sops" | "approvals" | "analytics"
   >("overview");
 
   // Mock Organization Profile state
@@ -144,6 +145,7 @@ export default function OrganizationWorkspacePage() {
       <div className="flex items-center gap-1 overflow-x-auto border-b border-paper-line pb-1 no-scrollbar text-xs">
         {[
           { id: "overview", label: "Overview" },
+          { id: "research", label: "Web Research (Live)" },
           { id: "profile", label: "Master Profile" },
           { id: "scorecard", label: `Scorecard (${scorecard.overallScore}%)` },
           { id: "documents", label: `Data Room (${documents.length})` },
@@ -244,6 +246,18 @@ export default function OrganizationWorkspacePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* TAB: WEB RESEARCH (FIRECRAWL + GEMINI) */}
+      {activeTab === "research" && (
+        <WebResearchPanel
+          orgContext={{
+            orgName: orgProfile.orgName,
+            sector: orgProfile.sector,
+            country: orgProfile.country,
+            project: "Decentralized Solar Cold Storage",
+          }}
+        />
       )}
 
       {/* TAB 2: MASTER PROFILE */}

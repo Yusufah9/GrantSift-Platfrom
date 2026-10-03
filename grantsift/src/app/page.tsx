@@ -1,5 +1,6 @@
 import { SiteNav } from "@/components/landing/site-nav";
 import { Hero } from "@/components/landing/hero";
+import { InteractiveOSShowcase } from "@/components/landing/interactive-os-showcase";
 import { TrustBento } from "@/components/landing/trust-bento";
 import { ProductMock } from "@/components/landing/product-mock";
 import { ReadinessScorecardTool } from "@/components/landing/readiness-scorecard-tool";
@@ -18,6 +19,7 @@ export default function HomePage() {
     <main id="main-content">
       <SiteNav />
       <Hero />
+      <InteractiveOSShowcase />
       <ReadinessScorecardTool />
       <TrustBento />
       <ProductMock />
