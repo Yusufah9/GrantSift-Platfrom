@@ -12,9 +12,6 @@ import { GoogleButton } from "@/components/auth/google-button";
 
 const initialState: ApiResponse<null> | null = null;
 
-const EMAIL_SUGGESTIONS = ["demo@grantsift.org", "user@grantsift.app"];
-const PASSWORD_SUGGESTIONS = ["GrantSift2025!"];
-
 export default function LoginPage() {
   const [state, formAction] = useActionState(
     async (_prev: typeof initialState, formData: FormData) => loginAction(formData),
@@ -24,20 +21,10 @@ export default function LoginPage() {
   const [emailValue, setEmailValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
 
-  function handleFillDemo() {
-    setEmailValue("demo@grantsift.org");
-    setPasswordValue("GrantSift2025!");
-  }
-
-  function handleFillFounderAdmin() {
-    setEmailValue("umaryaruyusuf971@gmail.com");
-    setPasswordValue("FOUNDERsafe@2026");
-  }
-
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Sign in to your GrantSift account. You will be onboarded to your dashboard automatically."
+      subtitle="Sign in to your GrantSift account to access your dashboard and workspace."
       footer={
         <>
           Don&apos;t have an account?{" "}
@@ -53,30 +40,6 @@ export default function LoginPage() {
         <span className="h-px flex-1 bg-paper-line" /> or sign in with email <span className="h-px flex-1 bg-paper-line" />
       </div>
 
-      {/* Quick Suggestion Helper Banner */}
-      <div className="rounded-xl border border-paper-line bg-paper/60 p-3 text-xs text-ink-soft space-y-2.5">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-ink">Founder & Admin Login:</span>
-          <button
-            type="button"
-            onClick={handleFillFounderAdmin}
-            className="rounded bg-amber-100 border border-amber-300 px-2 py-1 text-[11px] font-bold text-amber-900 hover:bg-amber-200 active:scale-95 transition-all"
-          >
-            Auto-fill Founder Admin
-          </button>
-        </div>
-        <div className="flex items-center justify-between pt-1.5 border-t border-paper-line/60">
-          <span className="font-semibold text-ink-soft">Demo User:</span>
-          <button
-            type="button"
-            onClick={handleFillDemo}
-            className="rounded bg-stamp-dark/10 px-2 py-0.5 text-[11px] font-semibold text-stamp-dark hover:bg-stamp-dark/20 active:scale-95 transition-all"
-          >
-            Auto-fill Demo
-          </button>
-        </div>
-      </div>
-
       <form action={formAction} className="space-y-4">
         {state && !state.success && <FormError message={state.error.message} />}
 
@@ -85,11 +48,9 @@ export default function LoginPage() {
           name="email"
           type="email"
           autoComplete="email"
-          placeholder="e.g. demo@grantsift.org"
+          placeholder="e.g. name@organization.com"
           value={emailValue}
           onChange={(e) => setEmailValue(e.target.value)}
-          suggestions={EMAIL_SUGGESTIONS}
-          helperText="Enter your email or select a suggested email above."
         />
 
         <div>
@@ -98,10 +59,9 @@ export default function LoginPage() {
             name="password"
             type="password"
             autoComplete="current-password"
-            placeholder="e.g. GrantSift2025!"
+            placeholder="Enter your password"
             value={passwordValue}
             onChange={(e) => setPasswordValue(e.target.value)}
-            suggestions={PASSWORD_SUGGESTIONS}
           />
           <div className="mt-1.5 flex justify-end">
             <Link href="/forgot-password" className="text-xs font-medium text-stamp-dark hover:underline">
@@ -110,9 +70,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <SubmitButton>Log in & Onboard to Dashboard</SubmitButton>
+        <SubmitButton>Sign In</SubmitButton>
       </form>
     </AuthShell>
   );
 }
-

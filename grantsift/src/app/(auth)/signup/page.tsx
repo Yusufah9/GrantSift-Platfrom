@@ -12,9 +12,6 @@ import { GoogleButton } from "@/components/auth/google-button";
 
 const initialState: ApiResponse<SignUpResult> | null = null;
 
-const EMAIL_SUGGESTIONS = ["director@nonprofit.org", "founder@impact.org"];
-const PASSWORD_SUGGESTIONS = ["GrantSift2025!"];
-
 export default function SignUpPage() {
   const [state, formAction] = useActionState(
     async (_prev: typeof initialState, formData: FormData) => signUpAction(formData),
@@ -25,10 +22,6 @@ export default function SignUpPage() {
   const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
   const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [targetPrompt, setTargetPrompt] = useState<string | null>(null);
-
-  useState(() => {
-    // initialize safely on mount
-  });
 
   // Client-side read of target query without causing SSR hydration mismatches
   useState(() => {
@@ -55,11 +48,6 @@ export default function SignUpPage() {
     } catch {
       setResendStatus("idle");
     }
-  }
-
-  function handleUseSuggestedPassword(suggestion: string) {
-    setPasswordValue(suggestion);
-    setConfirmPasswordValue(suggestion);
   }
 
   if (state?.success) {
@@ -164,7 +152,6 @@ export default function SignUpPage() {
           type="email"
           autoComplete="email"
           placeholder="e.g. founder@nonprofit.org"
-          suggestions={EMAIL_SUGGESTIONS}
           helperText="We will send a secure confirmation link via Brevo to this address."
         />
 
@@ -173,10 +160,9 @@ export default function SignUpPage() {
           name="password"
           type="password"
           autoComplete="new-password"
-          placeholder="e.g. GrantSift2025!"
+          placeholder="At least 8 characters"
           value={passwordValue}
           onChange={(e) => setPasswordValue(e.target.value)}
-          suggestions={PASSWORD_SUGGESTIONS}
           helperText="At least 8 characters with letters & numbers."
         />
 
@@ -195,4 +181,3 @@ export default function SignUpPage() {
     </AuthShell>
   );
 }
-

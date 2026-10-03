@@ -37,19 +37,6 @@ export function FormField({
   const isControlled = controlledValue !== undefined;
   const currentValue = isControlled ? controlledValue : internalValue;
 
-  function handleSuggestionClick(suggestion: string) {
-    if (!isControlled) {
-      setInternalValue(suggestion);
-    }
-    // Also trigger onChange if provided
-    if (onChange) {
-      const syntheticEvent = {
-        target: { value: suggestion, name },
-      } as React.ChangeEvent<HTMLInputElement>;
-      onChange(syntheticEvent);
-    }
-  }
-
   const effectiveType = type === "password" ? (showPassword ? "text" : "password") : type;
 
   return (
@@ -58,22 +45,6 @@ export function FormField({
         <label htmlFor={name} className="block text-xs font-semibold uppercase tracking-wider text-ink-soft">
           {label}
         </label>
-        {suggestions && suggestions.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap justify-end">
-            <span className="text-[11px] text-ink-faint">Suggestions:</span>
-            {suggestions.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => handleSuggestionClick(suggestion)}
-                className="inline-flex items-center rounded bg-paper-raised px-1.5 py-0.5 text-[11px] font-mono font-medium text-stamp-dark border border-paper-line transition-colors hover:border-stamp hover:bg-paper active:scale-95"
-                title={`Click to use "${suggestion}"`}
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="relative">
@@ -107,18 +78,9 @@ export function FormField({
         )}
       </div>
 
-      {suggestions && suggestions.length > 0 && (
-        <datalist id={datalistId}>
-          {suggestions.map((s) => (
-            <option key={s} value={s} />
-          ))}
-        </datalist>
-      )}
-
       {helperText && (
         <p className="text-[11px] leading-relaxed text-ink-faint">{helperText}</p>
       )}
     </div>
   );
 }
-
