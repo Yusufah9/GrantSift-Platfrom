@@ -71,7 +71,7 @@ export function SiteFooter() {
           </div>
           <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-[1.4fr_repeat(5,1fr)]">
             <div>
-              <p className="text-2xl font-bold tracking-tight">GRANT SHIFT</p>
+              <p className="text-2xl font-bold tracking-tight">GrantSift</p>
               <p className="mt-3 max-w-xs text-sm text-ink-soft">
                 Centralized Grant Management Operating System. Sourcing, matchmaking, proposal drafting, founder approvals, and post-award management.
               </p>
@@ -102,7 +102,7 @@ export function SiteFooter() {
               />
             </Link>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between border-t border-ink/5 pt-6 text-xs text-ink-faint">
-              <p>© {new Date().getFullYear()} GrantSift / GRANT SHIFT. All rights reserved.</p>
+              <p>© {new Date().getFullYear()} GrantSift. All rights reserved.</p>
               <div className="mt-3 flex items-center gap-6 sm:mt-0">
                 <Link href="/privacy" className="transition-colors hover:text-ink">Privacy Policy</Link>
                 <Link href="/terms" className="transition-colors hover:text-ink">Terms of Service</Link>
