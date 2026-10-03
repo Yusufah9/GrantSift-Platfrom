@@ -2,6 +2,7 @@ import { SiteNav } from "@/components/landing/site-nav";
 import { Hero } from "@/components/landing/hero";
 import { TrustBento } from "@/components/landing/trust-bento";
 import { ProductMock } from "@/components/landing/product-mock";
+import { ReadinessScorecardTool } from "@/components/landing/readiness-scorecard-tool";
 import { ProblemSolution } from "@/components/landing/problem-solution";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { InfraPanel } from "@/components/landing/infra-panel";
@@ -17,6 +18,7 @@ export default function HomePage() {
     <main id="main-content">
       <SiteNav />
       <Hero />
+      <ReadinessScorecardTool />
       <TrustBento />
       <ProductMock />
       <ProblemSolution />

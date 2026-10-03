@@ -5,13 +5,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const LINKS = [
-  { href: "/#product", label: "Product" },
+  { href: "/database", label: "Grant Database" },
+  { href: "/marketplace", label: "Grant Marketplace" },
+  { href: "/#readiness-scorecard", label: "Scorecard" },
+  { href: "/pricing", label: "Pricing & Pro" },
   { href: "/#solutions", label: "Solutions" },
-  { href: "/#how-it-works", label: "How it works" },
   { href: "/blog", label: "Blog" },
 ];
+
 const ACTIONS = [
   ...LINKS,
+  { href: "/database", label: "Search 40,000+ Grants" },
+  { href: "/marketplace", label: "Hire a Certified Grant Writer" },
+  { href: "/scorecard", label: "Calculate Grant Readiness Score" },
+  { href: "/pricing", label: "View Grant OS Pricing" },
   { href: "/signup", label: "Analyze a funder" },
   { href: "/login", label: "Log in" },
   { href: "/about", label: "About GrantSift" },
@@ -47,32 +54,32 @@ export function SiteNav() {
   return (
     <>
       <header className="sticky top-3 z-50 landing-container">
-        <div className="flex items-center justify-between rounded-full border border-ink/10 bg-paper-raised/80 py-2 pl-5 pr-2 backdrop-blur-xl">
+        <div className="flex items-center justify-between rounded-full border border-ink/10 bg-paper-raised/80 py-2 pl-5 pr-2 backdrop-blur-xl shadow-sm">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <span aria-hidden className="h-6 w-6 rounded-full" style={{ background: "radial-gradient(circle at 32% 26%, #6b6962, #0a0a0a 65%)" }} />
-            GrantSift
+            GrantSift <span className="text-[10px] font-mono uppercase tracking-widest text-ink-faint hidden sm:inline">OS</span>
           </Link>
-          <nav className="hidden items-center gap-7 text-sm font-medium md:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-6 text-xs font-semibold lg:flex" aria-label="Primary">
             {LINKS.map((l) => (
               <Link key={l.href} href={l.href} className="text-ink-soft transition-colors hover:text-ink">
                 {l.label}
               </Link>
             ))}
           </nav>
-          <div className="hidden items-center gap-2 text-sm font-medium md:flex">
+          <div className="hidden items-center gap-2 text-xs font-medium md:flex">
             <button
               type="button"
               onClick={() => setPalette(true)}
-              className="flex items-center gap-2 rounded-full border border-ink/10 px-3 py-2 text-ink-faint transition-colors hover:border-ink/40"
+              className="flex items-center gap-2 rounded-full border border-ink/10 px-3 py-1.5 text-ink-faint transition-colors hover:border-ink/40"
               aria-label="Open quick search"
             >
-              <span className="text-xs">Ctrl K</span>
+              <span>Ctrl K</span>
             </button>
-            <Link href="/login" className="px-3 py-2 text-ink-soft hover:text-ink">
+            <Link href="/login" className="px-3 py-1.5 text-ink-soft hover:text-ink font-semibold">
               Log in
             </Link>
-            <Link href="/signup" className="rounded-full bg-ink px-5 py-2.5 text-paper transition-transform hover:scale-[1.04]">
-              Start free
+            <Link href="/signup" className="rounded-full bg-ink px-4 py-2 text-paper transition-transform hover:scale-[1.03] font-semibold shadow-sm">
+              Start Free
             </Link>
           </div>
           <button
@@ -81,7 +88,7 @@ export function SiteNav() {
             aria-controls="mobile-nav"
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((v) => !v)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/20 md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/20 lg:hidden"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d={open ? "M2 2L14 14M14 2L2 14" : "M2 5H14M2 11H14"} stroke="currentColor" strokeWidth="1.6" />
@@ -89,11 +96,11 @@ export function SiteNav() {
           </button>
         </div>
         {open && (
-          <nav id="mobile-nav" className="mt-2 rounded-2xl border border-ink/10 bg-paper-raised p-4 md:hidden">
-            <ul className="space-y-1 text-base font-medium">
+          <nav id="mobile-nav" className="mt-2 rounded-2xl border border-ink/10 bg-paper-raised p-4 lg:hidden">
+            <ul className="space-y-1 text-sm font-medium">
               {[...LINKS, { href: "/login", label: "Log in" }, { href: "/signup", label: "Start free" }].map((l) => (
                 <li key={l.label}>
-                  <button type="button" onClick={() => go(l.href)} className="block w-full rounded-xl px-3 py-3 text-left hover:bg-paper">
+                  <button type="button" onClick={() => go(l.href)} className="block w-full rounded-xl px-3 py-2.5 text-left hover:bg-paper">
                     {l.label}
                   </button>
                 </li>
@@ -104,30 +111,45 @@ export function SiteNav() {
       </header>
 
       {palette && (
-        <div className="fixed inset-0 z-[60] flex items-start justify-center bg-ink/40 px-4 pt-[18vh] backdrop-blur-sm" onClick={() => setPalette(false)}>
-          <div role="dialog" aria-label="Quick search" className="w-full max-w-lg overflow-hidden rounded-2xl bg-paper-raised shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Quick search palette"
+          onClick={() => setPalette(false)}
+          className="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 p-4 pt-24 backdrop-blur-sm"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-2xl border border-paper-line bg-paper-raised p-4 shadow-2xl"
+          >
             <input
               autoFocus
+              type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && results[0] && go(results[0].href)}
-              placeholder="Where do you want to go?"
-              className="w-full border-b border-ink/10 bg-transparent px-5 py-4 text-base outline-none"
+              placeholder="Search Grant Database, Marketplace, Scorecard, or Actions…"
+              className="w-full rounded-xl border border-paper-line bg-paper px-4 py-2.5 text-sm text-ink outline-none focus:border-ink"
             />
-            <ul className="max-h-72 overflow-auto p-2">
-              {results.map((r) => (
-                <li key={r.label}>
-                  <button type="button" onClick={() => go(r.href)} className="w-full rounded-xl px-3 py-3 text-left text-sm font-medium hover:bg-paper">
-                    {r.label}
+            <div className="mt-3 max-h-60 overflow-y-auto space-y-1 text-xs">
+              {results.length === 0 ? (
+                <p className="p-3 text-ink-faint">No matching links or actions.</p>
+              ) : (
+                results.map((r) => (
+                  <button
+                    key={r.label}
+                    type="button"
+                    onClick={() => go(r.href)}
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left hover:bg-paper"
+                  >
+                    <span className="font-medium text-ink">{r.label}</span>
+                    <span className="text-ink-faint text-[10px] font-mono">{r.href}</span>
                   </button>
-                </li>
-              ))}
-              {results.length === 0 && <li className="px-3 py-3 text-sm text-ink-faint">Nothing matches. Try “blog” or “log in”.</li>}
-            </ul>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
     </>
   );
 }
-

@@ -1,19 +1,57 @@
 import Link from "next/link";
 
 const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] = [
-  { heading: "Product", links: [
-    { label: "Analyze a funder", href: "/signup" }, { label: "Grant readiness", href: "/#product" },
-    { label: "Application plan", href: "/#how-it-works" }, { label: "Excel export", href: "/#how-it-works" } ] },
-  { heading: "Solutions", links: [
-    { label: "Founders", href: "/#solutions" }, { label: "Researchers", href: "/#solutions" },
-    { label: "NGOs", href: "/#solutions" }, { label: "Grant offices", href: "/#solutions" } ] },
-  { heading: "Resources", links: [
-    { label: "Blog", href: "/blog" }, { label: "How it works", href: "/#how-it-works" } ] },
-  { heading: "Company", links: [
-    { label: "About", href: "/about" }, { label: "Contact", href: "/contact" },
-    { label: "Privacy", href: "/privacy" }, { label: "Terms", href: "/terms" } ] },
-  { heading: "Account", links: [
-    { label: "Log in", href: "/login" }, { label: "Create account", href: "/signup" } ] },
+  {
+    heading: "Grant Platform",
+    links: [
+      { label: "Platform Overview", href: "/#product" },
+      { label: "Grant Prospecting", href: "/database" },
+      { label: "Grant Writing Tools", href: "/#how-it-works" },
+      { label: "Award Management", href: "/tracker" },
+      { label: "Grant Database", href: "/database" },
+      { label: "Grant Marketplace", href: "/marketplace" },
+    ],
+  },
+  {
+    heading: "Solutions",
+    links: [
+      { label: "Nonprofits", href: "/#solutions" },
+      { label: "NGOs", href: "/#solutions" },
+      { label: "Startups", href: "/#solutions" },
+      { label: "Businesses", href: "/#solutions" },
+      { label: "Universities", href: "/#solutions" },
+      { label: "Grant Consultants", href: "/grant-writers" },
+      { label: "Grant Writers", href: "/marketplace" },
+    ],
+  },
+  {
+    heading: "Resources",
+    links: [
+      { label: "Grant Database", href: "/database" },
+      { label: "Readiness Scorecard", href: "/scorecard" },
+      { label: "Guides & Templates", href: "/#how-it-works" },
+      { label: "Pricing & Pro", href: "/pricing" },
+      { label: "Blog", href: "/blog" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Contact", href: "/contact" },
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
+    ],
+  },
+  {
+    heading: "Account",
+    links: [
+      { label: "Log in", href: "/login" },
+      { label: "Create account", href: "/signup" },
+      { label: "Organization OS", href: "/workspace" },
+      { label: "Funder Portal", href: "/funder" },
+    ],
+  },
 ];
 
 export function SiteFooter() {
@@ -24,28 +62,40 @@ export function SiteFooter() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-14 flex flex-wrap items-center justify-between gap-6">
             <p className="display max-w-lg text-3xl md:text-5xl">Have a grant deadline coming up?</p>
-            <Link href="/contact" className="inline-flex h-20 min-w-[260px] items-center justify-center rounded-full border-2 border-ink px-10 text-2xl font-medium transition-colors hover:bg-ink hover:text-paper">Let&apos;s talk</Link>
+            <Link
+              href="/contact"
+              className="inline-flex h-20 min-w-[260px] items-center justify-center rounded-full border-2 border-ink px-10 text-2xl font-medium transition-colors hover:bg-ink hover:text-paper"
+            >
+              Let&apos;s talk
+            </Link>
           </div>
           <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-[1.4fr_repeat(5,1fr)]">
             <div>
-              <p className="text-2xl font-bold tracking-tight">GrantSift</p>
-              <p className="mt-3 max-w-xs text-sm text-ink-soft">A clear path through grant sourcing, applications and management, built with Africa in mind.</p>
+              <p className="text-2xl font-bold tracking-tight">GRANT SHIFT</p>
+              <p className="mt-3 max-w-xs text-sm text-ink-soft">
+                Centralized Grant Management Operating System. Sourcing, matchmaking, proposal drafting, founder approvals, and post-award management.
+              </p>
             </div>
             {COLUMNS.map((c) => (
               <div key={c.heading}>
                 <p className="text-sm font-semibold">{c.heading}</p>
-                <ul className="mt-4 space-y-2.5 text-sm text-ink-soft">
+                <ul className="mt-4 space-y-2.5 text-xs text-ink-soft">
                   {c.links.map((l) => (
-                    <li key={l.label}><Link href={l.href} className="transition-colors hover:text-ink">{l.label}</Link></li>
+                    <li key={l.label}>
+                      <Link href={l.href} className="transition-colors hover:text-ink">
+                        {l.label}
+                      </Link>
+                    </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          <p className="mt-14 border-t border-ink/10 pt-6 text-xs text-ink-faint">© {new Date().getFullYear()} GrantSift. All rights reserved.</p>
+          <p className="mt-14 border-t border-ink/10 pt-6 text-xs text-ink-faint">
+            © {new Date().getFullYear()} GRANT SHIFT / GrantSift. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
   );
 }
-
