@@ -61,9 +61,20 @@ export function AppNav({ email, isAdmin }: { email: string; isAdmin: boolean }) 
           </div>
 
           {isAdmin && (
-            <Link href="/admin" className="rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-amber-900 font-semibold hover:bg-amber-100">
-              Admin
-            </Link>
+            <div className="flex items-center gap-1.5">
+              <Link
+                href="/admin/blog/new"
+                className="rounded-full bg-amber-900 px-3 py-1 text-white font-semibold hover:bg-black transition-colors flex items-center gap-1 text-[11px]"
+              >
+                <span>✍️ Write Blog</span>
+              </Link>
+              <Link
+                href="/admin"
+                className="rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-amber-900 font-semibold hover:bg-amber-100"
+              >
+                Admin
+              </Link>
+            </div>
           )}
 
           <span className="hidden md:inline font-mono text-[11px] text-ink-faint truncate max-w-[140px]">{email}</span>

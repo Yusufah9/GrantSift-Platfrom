@@ -9,8 +9,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/admin");
 
+  const isFounder = user.email?.toLowerCase() === "umaryaruyusuf971@gmail.com";
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-  if (profile?.role !== "admin") redirect("/dashboard");
+  if (profile?.role !== "admin" && !isFounder) redirect("/dashboard");
 
   return (
     <div className="min-h-screen bg-paper">

@@ -29,6 +29,11 @@ export default function LoginPage() {
     setPasswordValue("GrantSift2025!");
   }
 
+  function handleFillFounderAdmin() {
+    setEmailValue("umaryaruyusuf971@gmail.com");
+    setPasswordValue("FOUNDERsafe@2026");
+  }
+
   return (
     <AuthShell
       title="Welcome back"
@@ -49,20 +54,26 @@ export default function LoginPage() {
       </div>
 
       {/* Quick Suggestion Helper Banner */}
-      <div className="rounded border border-paper-line bg-paper/60 p-3 text-xs text-ink-soft">
+      <div className="rounded-xl border border-paper-line bg-paper/60 p-3 text-xs text-ink-soft space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-ink">Suggested Demo Account:</span>
+          <span className="font-semibold text-ink">Founder & Admin Login:</span>
+          <button
+            type="button"
+            onClick={handleFillFounderAdmin}
+            className="rounded bg-amber-100 border border-amber-300 px-2 py-1 text-[11px] font-bold text-amber-900 hover:bg-amber-200 active:scale-95 transition-all"
+          >
+            Auto-fill Founder Admin
+          </button>
+        </div>
+        <div className="flex items-center justify-between pt-1.5 border-t border-paper-line/60">
+          <span className="font-semibold text-ink-soft">Demo User:</span>
           <button
             type="button"
             onClick={handleFillDemo}
-            className="rounded bg-stamp-dark/10 px-2 py-1 text-[11px] font-semibold text-stamp-dark hover:bg-stamp-dark/20 active:scale-95 transition-all"
+            className="rounded bg-stamp-dark/10 px-2 py-0.5 text-[11px] font-semibold text-stamp-dark hover:bg-stamp-dark/20 active:scale-95 transition-all"
           >
-            Auto-fill credentials
+            Auto-fill Demo
           </button>
-        </div>
-        <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono text-ink-faint">
-          <span>Email: <strong className="text-ink">demo@grantsift.org</strong></span>
-          <span>Password: <strong className="text-ink">GrantSift2025!</strong></span>
         </div>
       </div>
 

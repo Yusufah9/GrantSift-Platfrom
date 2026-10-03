@@ -11,8 +11,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let isAdmin = false;
   let orgName = "My Organization";
   if (user) {
+    const isFounder = user.email?.toLowerCase() === "umaryaruyusuf971@gmail.com";
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-    isAdmin = profile?.role === "admin";
+    isAdmin = isFounder || profile?.role === "admin";
     orgName = user.user_metadata?.organization_name || user.user_metadata?.full_name || "My Organization";
   }
 
