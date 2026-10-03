@@ -91,9 +91,25 @@ export function SiteFooter() {
               </div>
             ))}
           </div>
-          <p className="mt-14 border-t border-ink/10 pt-6 text-xs text-ink-faint">
-            © {new Date().getFullYear()} GRANT SHIFT / GrantSift. All rights reserved.
-          </p>
+
+          {/* Iconic Giant Brand Wordmark Banner (Instrumentl / Antigravity Style) */}
+          <div className="mt-14 border-t border-ink/10 pt-8 text-center">
+            <Link href="/" aria-label="GrantSift Home" className="group block overflow-hidden py-4">
+              <img
+                src="/images/grantsift-footer-wordmark.jpg"
+                alt="GrantSift"
+                className="mx-auto w-full max-w-5xl object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.01]"
+              />
+            </Link>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between border-t border-ink/5 pt-6 text-xs text-ink-faint">
+              <p>© {new Date().getFullYear()} GrantSift / GRANT SHIFT. All rights reserved.</p>
+              <div className="mt-3 flex items-center gap-6 sm:mt-0">
+                <Link href="/privacy" className="transition-colors hover:text-ink">Privacy Policy</Link>
+                <Link href="/terms" className="transition-colors hover:text-ink">Terms of Service</Link>
+                <Link href="/contact" className="transition-colors hover:text-ink">Support</Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </footer>
