@@ -3,615 +3,784 @@
 import { useState } from "react";
 import Link from "next/link";
 import { calculateReadinessScore, type ScorecardInput } from "@/lib/services/scorecard-service";
-import { downloadScorecardExcel } from "@/lib/excel/scorecard-export";
 import { WebResearchPanel } from "@/components/research/web-research-panel";
+import { DataRoomManager } from "@/components/dataroom/data-room-manager";
+import { ProposalWorkspaceEditor } from "@/components/proposals/proposal-workspace-editor";
+import { GrantSopPipeline } from "@/components/sop/grant-sop-pipeline";
+import { aiMatchingService, type ProjectAnalysisProfile, type ProjectRunAnalysisReport } from "@/lib/services/ai-matching-service";
+import { GrantOpportunityCard } from "@/components/grants/grant-opportunity-card";
+import { FunderEntityCard } from "@/components/grants/funder-entity-card";
 
 export default function OrganizationWorkspacePage() {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "research" | "profile" | "scorecard" | "documents" | "sops" | "approvals" | "analytics"
+    "overview" | "research" | "profile" | "scorecard" | "analysis" | "proposals" | "documents" | "sops" | "analytics"
   >("overview");
 
-  // Mock Organization Profile state
-  const [orgProfile, setOrgProfile] = useState({
-    orgName: "SunGrow AgriTech Africa",
+  // Multi-tenant Organization Profile (PRD §25: Starts empty if no org created)
+  const [hasOrganization, setHasOrganization] = useState(false);
+  const [showOrgModal, setShowOrgModal] = useState(false);
+  const [orgProfile, setOrgProfile] = useState<ProjectAnalysisProfile>({
+    projectName: "",
+    orgName: "",
     orgType: "Startup",
-    country: "Nigeria",
-    state: "Lagos",
-    industry: "Agriculture",
-    sector: "Clean Energy & Agri-Tech",
-    stage: "Early Revenue / Growth",
-    yearFounded: 2022,
-    teamSize: 7,
-    revenue: 55000,
-    fundingReceived: 25000,
-    problemStatement:
-      "Smallholder horticulture farmers across northern and western Nigeria lose 35-45% of perishable tomato and pepper harvests due to lack of off-grid cold chain storage and fragmented middleman distribution.",
-    solutionStatement:
-      "We design, deploy, and lease solar-powered decentralized micro-cold rooms with integrated mobile marketplace pricing alerts, eliminating spoilage and increasing farmer net revenue by 40%.",
-    targetBeneficiaries: "Over 4,200 smallholder farming households and women market traders.",
-    sdgs: ["SDG 2: Zero Hunger", "SDG 7: Affordable & Clean Energy", "SDG 8: Decent Work & Economic Growth"],
+    country: "",
+    industry: "",
+    sector: "",
+    problemStatement: "",
+    solutionStatement: "",
+    targetBeneficiaries: "",
+    stage: "Seed",
+    fundingRequirement: 100000,
+    traction: "",
+    teamInfo: "",
+    hasIncorporation: false,
+    hasAuditedFinancials: false,
   });
 
-  // Scorecard calculation based on org profile
+  // Project Run Analysis Results
+  const [analysisReport, setAnalysisReport] = useState<ProjectRunAnalysisReport | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // User Tracker Saved Grants (PRD §27: Starts empty)
+  const [savedGrants, setSavedGrants] = useState<any[]>([]);
+
+  // Scorecard calculation based on actual org data
   const scorecardInput: ScorecardInput = {
-    orgName: orgProfile.orgName,
+    orgName: orgProfile.orgName || "Your Organization",
     orgType: orgProfile.orgType as any,
-    industry: orgProfile.industry,
-    country: orgProfile.country,
+    industry: orgProfile.industry || "General",
+    country: orgProfile.country || "Global",
     stage: orgProfile.stage as any,
-    yearFounded: orgProfile.yearFounded,
-    teamSize: orgProfile.teamSize,
-    revenue: orgProfile.revenue,
-    fundingRaised: orgProfile.fundingReceived,
+    yearFounded: 2024,
+    teamSize: 3,
+    revenue: 0,
+    fundingRaised: 0,
     problemStatement: orgProfile.problemStatement,
     targetBeneficiaries: orgProfile.targetBeneficiaries,
-    impactMetrics: "Reduced harvest spoilage by 62% across 3 state cooperatives.",
-    hasIncorporation: true,
-    hasTaxId: true,
-    hasAuditedFinancials: false, // Gap
-    hasPitchDeck: true,
-    hasBusinessPlan: true,
-    hasLettersOfSupport: true,
+    impactMetrics: orgProfile.traction,
+    hasIncorporation: orgProfile.hasIncorporation || false,
+    hasTaxId: orgProfile.hasIncorporation || false,
+    hasAuditedFinancials: orgProfile.hasAuditedFinancials || false,
+    hasPitchDeck: Boolean(orgProfile.solutionStatement),
+    hasBusinessPlan: Boolean(orgProfile.problemStatement),
+    hasLettersOfSupport: false,
   };
 
   const scorecard = calculateReadinessScore(scorecardInput);
 
-  // Data Room Documents state
-  const [documents, setDocuments] = useState([
-    {
-      id: "doc-1",
-      name: "CAC_Certificate_of_Incorporation.pdf",
-      folder: "01 Corporate",
-      category: "Corporate",
-      permission: "Owner",
-      uploadedAt: "2026-09-12",
-      size: "1.2 MB",
-    },
-    {
-      id: "doc-2",
-      name: "Federal_Tax_Identification_Number.pdf",
-      folder: "01 Corporate",
-      category: "Corporate",
-      permission: "Owner",
-      uploadedAt: "2026-09-12",
-      size: "850 KB",
-    },
-    {
-      id: "doc-3",
-      name: "Financial_Projections_2025_2027.xlsx",
-      folder: "02 Financial",
-      category: "Financial",
-      permission: "Editor",
-      uploadedAt: "2026-09-28",
-      size: "2.4 MB",
-    },
-    {
-      id: "doc-4",
-      name: "SunGrow_Investor_Pitch_Deck_v4.pdf",
-      folder: "03 Business",
-      category: "Business",
-      permission: "Viewer",
-      uploadedAt: "2026-10-01",
-      size: "4.8 MB",
-    },
-    {
-      id: "doc-5",
-      name: "Farmer_Cooperative_Impact_Audit_2025.pdf",
-      folder: "06 Impact",
-      category: "Impact",
-      permission: "Viewer",
-      uploadedAt: "2026-09-20",
-      size: "1.8 MB",
-    },
-  ]);
+  const handleCreateOrganization = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orgProfile.orgName.trim() || !orgProfile.country.trim()) {
+      alert("Please provide at least Organization Name and Country.");
+      return;
+    }
+    setHasOrganization(true);
+    setShowOrgModal(false);
+  };
 
-  const [requestedDocNotice, setRequestedDocNotice] = useState<string | null>(null);
-
-  const handleRequestDocument = (docName: string) => {
-    setRequestedDocNotice(`Document request for "${docName}" sent to Founder email & in-app inbox.`);
-    setTimeout(() => setRequestedDocNotice(null), 4000);
+  const handleRunAnalysis = () => {
+    if (!hasOrganization) {
+      setShowOrgModal(true);
+      return;
+    }
+    setIsAnalyzing(true);
+    setTimeout(() => {
+      const report = aiMatchingService.analyzeProjectMatches(orgProfile);
+      setAnalysisReport(report);
+      setIsAnalyzing(false);
+      setActiveTab("analysis");
+    }, 600);
   };
 
   return (
     <div className="space-y-8">
-      {/* Workspace Header */}
+      {/* Top Workspace Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-paper-line pb-6">
         <div>
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-stamp-tint px-2.5 py-0.5 text-xs font-mono font-semibold uppercase text-stamp-dark">
-              Organization Source of Truth
+              Grant Operating System
             </span>
-            <span className="text-xs text-ink-faint">&bull; Permanent Tenant Workspace</span>
+            <span className="text-xs text-ink-faint">
+              &bull; {hasOrganization ? orgProfile.orgName : "No Active Organization"}
+            </span>
           </div>
           <h1 className="font-serif text-3xl font-bold tracking-tight text-ink mt-1.5">
-            {orgProfile.orgName}
+            {hasOrganization ? `${orgProfile.orgName} Workspace` : "Organization Workspace"}
           </h1>
-          <p className="text-xs text-ink-soft mt-1">
-            {orgProfile.sector} &bull; {orgProfile.country} &bull; {orgProfile.stage}
+          <p className="text-sm text-ink-soft mt-1 max-w-2xl">
+            Complete institutional grant workflow: discover, research, match, write, track, and manage funding awards.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {!hasOrganization ? (
+            <button
+              type="button"
+              onClick={() => setShowOrgModal(true)}
+              className="rounded bg-stamp-dark px-4 py-2 text-xs font-semibold text-paper shadow-sm hover:bg-stamp transition-all"
+            >
+              + Create Organization
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={isAnalyzing}
+              onClick={handleRunAnalysis}
+              className="rounded bg-stamp-dark px-4 py-2 text-xs font-semibold text-paper shadow-sm hover:bg-stamp transition-all disabled:opacity-50"
+            >
+              {isAnalyzing ? "Analyzing Database..." : "⚡ Run Grant Matching"}
+            </button>
+          )}
+
           <Link
             href="/database"
-            className="rounded-full bg-ink px-4 py-2 text-xs font-semibold text-paper hover:bg-stamp-dark transition-all"
+            className="rounded bg-paper px-4 py-2 text-xs font-semibold border border-paper-line text-ink hover:border-ink/40 transition-all shadow-sm"
           >
-            Find Grants for this Org &rarr;
+            Grant Database
           </Link>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto border-b border-paper-line pb-1 no-scrollbar text-xs">
-        {[
-          { id: "overview", label: "Overview" },
-          { id: "research", label: "Web Research (Live)" },
-          { id: "profile", label: "Master Profile" },
-          { id: "scorecard", label: `Scorecard (${scorecard.overallScore}%)` },
-          { id: "documents", label: `Data Room (${documents.length})` },
-          { id: "sops", label: "Grant SOPs" },
-          { id: "approvals", label: "Approvals" },
-          { id: "analytics", label: "Analytics" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`rounded-lg px-3.5 py-2 font-semibold transition-colors whitespace-nowrap ${
-              activeTab === tab.id
-                ? "bg-ink text-paper"
-                : "text-ink-soft hover:bg-paper-raised hover:text-ink"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* TAB 1: OVERVIEW */}
-      {activeTab === "overview" && (
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl border border-paper-line bg-paper-raised p-5 shadow-sm">
-              <span className="text-xs font-mono text-ink-faint">Readiness Score</span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="font-serif text-3xl font-bold text-ink">{scorecard.overallScore}%</span>
-                <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold text-emerald-800">
-                  Grade {scorecard.grade}
-                </span>
-              </div>
-              <p className="text-[11px] text-ink-soft mt-1">Eligible for institutional grants up to $500k</p>
-            </div>
-
-            <div className="rounded-2xl border border-paper-line bg-paper-raised p-5 shadow-sm">
-              <span className="text-xs font-mono text-ink-faint">Pipeline Value</span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="font-serif text-3xl font-bold text-ink">$800k</span>
-                <span className="text-xs text-ink-soft">USD</span>
-              </div>
-              <p className="text-[11px] text-ink-soft mt-1">3 opportunities in progress</p>
-            </div>
-
-            <div className="rounded-2xl border border-paper-line bg-paper-raised p-5 shadow-sm">
-              <span className="text-xs font-mono text-ink-faint">Data Room Documents</span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="font-serif text-3xl font-bold text-ink">{documents.length}</span>
-                <span className="text-xs text-emerald-800">Verified</span>
-              </div>
-              <p className="text-[11px] text-ink-soft mt-1">1 required document missing (Audited Books)</p>
-            </div>
-
-            <div className="rounded-2xl border border-paper-line bg-paper-raised p-5 shadow-sm">
-              <span className="text-xs font-mono text-ink-faint">Pending Approvals</span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="font-serif text-3xl font-bold text-amber-800">1</span>
-                <span className="text-xs text-ink-soft">Action required</span>
-              </div>
-              <p className="text-[11px] text-ink-soft mt-1">TEF Entrepreneurship submission ready</p>
-            </div>
+      {/* Clean Empty State Rule (PRD §25, §28) */}
+      {!hasOrganization ? (
+        <div className="rounded-2xl border border-dashed border-paper-line bg-paper-raised/40 p-12 text-center space-y-4 max-w-2xl mx-auto shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-stamp/10 text-stamp-dark text-2xl font-serif">
+            🏛️
           </div>
-
-          <div className="rounded-2xl border border-paper-line bg-paper-raised p-6 shadow-sm space-y-4">
-            <h3 className="font-serif text-lg font-bold text-ink">Active Funding Pipeline</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-xl border border-paper-line bg-paper p-4 text-xs">
-                <div>
-                  <span className="font-semibold text-ink text-sm">SEFA Catalyst Clean Energy Grant</span>
-                  <p className="text-ink-soft mt-0.5">AfDB &bull; $500,000 USD &bull; Deadline Dec 15, 2026</p>
-                </div>
-                <span className="rounded-full bg-amber-50 border border-amber-200 px-3 py-1 font-semibold text-amber-900">
-                  Writing Stage (60%)
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between rounded-xl border border-paper-line bg-paper p-4 text-xs">
-                <div>
-                  <span className="font-semibold text-ink text-sm">TEF Entrepreneurship Programme</span>
-                  <p className="text-ink-soft mt-0.5">Tony Elumelu Foundation &bull; $50,000 USD &bull; Deadline Nov 30, 2026</p>
-                </div>
-                <span className="rounded-full bg-purple-50 border border-purple-200 px-3 py-1 font-semibold text-purple-900">
-                  Awaiting Founder Sign-off
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between rounded-xl border border-paper-line bg-paper p-4 text-xs">
-                <div>
-                  <span className="font-semibold text-ink text-sm">USAID Feed the Future Agri-Food Grant</span>
-                  <p className="text-ink-soft mt-0.5">USAID &bull; $250,000 USD &bull; Awarded</p>
-                </div>
-                <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 font-semibold text-emerald-900">
-                  Awarded &bull; Tranche 1 Disbursed
-                </span>
-              </div>
-            </div>
+          <h2 className="font-serif text-2xl font-bold text-ink">Welcome to Your Grant Operating System</h2>
+          <p className="text-sm text-ink-soft leading-relaxed">
+            Your workspace is currently clean and unconfigured. To begin discovering verified grants, matching funding opportunities, and drafting proposals, set up your organization profile.
+          </p>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => setShowOrgModal(true)}
+              className="rounded-lg bg-stamp-dark px-6 py-2.5 text-sm font-semibold text-paper shadow-sm hover:bg-stamp transition-all"
+            >
+              Create Your Organization &rarr;
+            </button>
           </div>
         </div>
-      )}
-
-      {/* TAB: WEB RESEARCH (FIRECRAWL + GEMINI) */}
-      {activeTab === "research" && (
-        <WebResearchPanel
-          orgContext={{
-            orgName: orgProfile.orgName,
-            sector: orgProfile.sector,
-            country: orgProfile.country,
-            project: "Decentralized Solar Cold Storage",
-          }}
-        />
-      )}
-
-      {/* TAB 2: MASTER PROFILE */}
-      {activeTab === "profile" && (
-        <div className="max-w-3xl rounded-2xl border border-paper-line bg-paper-raised p-6 shadow-sm space-y-6">
-          <div>
-            <h2 className="font-serif text-xl font-bold text-ink">Organization Master Profile</h2>
-            <p className="text-xs text-ink-soft mt-1">
-              Enter your organization details once. The intelligence layer automatically reuses this context in grant matchmaking, proposal generation, and eligibility checks.
-            </p>
+      ) : (
+        <>
+          {/* Workspace Navigation Tabs */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-paper-line text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setActiveTab("overview")}
+              className={`pb-3 px-3 transition-all border-b-2 ${
+                activeTab === "overview" ? "border-stamp-dark text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              Overview &amp; Project
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("analysis")}
+              className={`pb-3 px-3 transition-all border-b-2 ${
+                activeTab === "analysis" ? "border-stamp-dark text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              Matched Grants &amp; Funders {analysisReport && `(${analysisReport.matchedGrants.length})`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("research")}
+              className={`pb-3 px-3 transition-all border-b-2 ${
+                activeTab === "research" ? "border-stamp-dark text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              Live Web Research
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("proposals")}
+              className={`pb-3 px-3 transition-all border-b-2 ${
+                activeTab === "proposals" ? "border-stamp-dark text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              Proposal Workspace
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("documents")}
+              className={`pb-3 px-3 transition-all border-b-2 ${
+                activeTab === "documents" ? "border-stamp-dark text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              Data Room
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("sops")}
+              className={`pb-3 px-3 transition-all border-b-2 ${
+                activeTab === "sops" ? "border-stamp-dark text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              24-Step Grant SOP
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("scorecard")}
+              className={`pb-3 px-3 transition-all border-b-2 ${
+                activeTab === "scorecard" ? "border-stamp-dark text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              Institutional Scorecard ({scorecard.overallScore}/100)
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("analytics")}
+              className={`pb-3 px-3 transition-all border-b-2 ${
+                activeTab === "analytics" ? "border-stamp-dark text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              Analytics
+            </button>
           </div>
 
-          <div className="space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-4">
+          {/* TAB 1: OVERVIEW */}
+          {activeTab === "overview" && (
+            <div className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-12">
+                {/* Organization & Project Summary */}
+                <div className="md:col-span-8 rounded-xl border border-paper-line bg-paper-raised p-6 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-paper-line">
+                    <div>
+                      <span className="text-xs text-ink-faint font-semibold uppercase">Project Master Profile</span>
+                      <h3 className="font-serif text-xl font-bold text-ink mt-0.5">
+                        {orgProfile.projectName || "General Initiative"}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowOrgModal(true)}
+                      className="rounded border border-paper-line bg-paper px-3 py-1.5 text-xs font-semibold text-ink-soft hover:text-ink"
+                    >
+                      Edit Profile
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2 text-xs">
+                    <div>
+                      <span className="text-ink-faint block">Country</span>
+                      <span className="font-semibold text-ink">{orgProfile.country}</span>
+                    </div>
+                    <div>
+                      <span className="text-ink-faint block">Sector</span>
+                      <span className="font-semibold text-ink">{orgProfile.sector || "Clean Technology"}</span>
+                    </div>
+                    <div>
+                      <span className="text-ink-faint block">Stage</span>
+                      <span className="font-semibold text-ink">{orgProfile.stage}</span>
+                    </div>
+                    <div>
+                      <span className="text-ink-faint block">Target Funding</span>
+                      <span className="font-semibold text-ink">${orgProfile.fundingRequirement.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <h4 className="font-semibold text-ink">Problem Statement</h4>
+                    <p className="text-ink-soft bg-paper p-3 rounded border border-paper-line leading-relaxed">
+                      {orgProfile.problemStatement || "No problem statement defined yet."}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <h4 className="font-semibold text-ink">Proposed Solution</h4>
+                    <p className="text-ink-soft bg-paper p-3 rounded border border-paper-line leading-relaxed">
+                      {orgProfile.solutionStatement || "No solution statement defined yet."}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between border-t border-paper-line">
+                    <span className="text-xs text-ink-soft">
+                      Ready to identify matching funding opportunities?
+                    </span>
+                    <button
+                      type="button"
+                      disabled={isAnalyzing}
+                      onClick={handleRunAnalysis}
+                      className="rounded bg-stamp-dark px-4 py-2 text-xs font-semibold text-paper shadow-sm hover:bg-stamp transition-all"
+                    >
+                      ⚡ Run Analysis Now
+                    </button>
+                  </div>
+                </div>
+
+                {/* Readiness Quick Card */}
+                <div className="md:col-span-4 rounded-xl border border-paper-line bg-paper-raised p-6 shadow-sm space-y-4 text-xs">
+                  <span className="font-serif font-bold text-sm text-ink block pb-2 border-b border-paper-line">
+                    Grant Readiness Scorecard
+                  </span>
+                  <div className="text-center py-2">
+                    <span className="text-4xl font-serif font-bold text-stamp-dark">{scorecard.overallScore}</span>
+                    <span className="text-ink-faint"> / 100</span>
+                    <p className="text-[11px] text-ink-soft mt-1">Readiness Grade: {scorecard.grade}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[11px]">
+                      <span>Profile Completeness</span>
+                      <span className="font-bold">{scorecard.categoryScores.orgProfile}%</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span>Legal Compliance</span>
+                      <span className="font-bold">{scorecard.categoryScores.legalDocumentation}%</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span>Impact Evidence</span>
+                      <span className="font-bold">{scorecard.categoryScores.impactDocumentation}%</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("scorecard")}
+                    className="w-full text-center rounded border border-paper-line bg-paper py-2 font-semibold text-ink-soft hover:text-ink"
+                  >
+                    View Scorecard Details &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: RUN ANALYSIS MATCHED GRANTS & FUNDERS (PRD §8, §9, §10, §14) */}
+          {activeTab === "analysis" && (
+            <div className="space-y-6">
+              {!analysisReport ? (
+                <div className="rounded-xl border border-dashed border-paper-line p-10 text-center bg-paper-raised/40 space-y-3">
+                  <h3 className="font-serif text-lg font-semibold text-ink">Run Analysis to Match Opportunities</h3>
+                  <p className="text-xs text-ink-soft max-w-md mx-auto">
+                    The AI matching engine evaluates your project profile against open opportunities and foundation mandates with detailed compatibility reasoning.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleRunAnalysis}
+                    className="rounded bg-stamp-dark px-5 py-2 text-xs font-semibold text-paper"
+                  >
+                    ⚡ Run Analysis
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Analysis Summary Header */}
+                  <div className="rounded-xl border border-paper-line bg-paper-raised p-5 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-stamp-dark uppercase tracking-wider">
+                        AI Matching Intelligence Report
+                      </span>
+                      <span className="text-xs font-mono text-ink-faint">Generated {analysisReport.timestamp.slice(0, 10)}</span>
+                    </div>
+                    <h2 className="font-serif text-xl font-bold text-ink">
+                      Opportunities &amp; Foundations Matched for {analysisReport.projectSummary.name}
+                    </h2>
+                    <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                      {analysisReport.highPriorityRecommendations.map((rec, i) => (
+                        <span key={i} className="rounded bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-emerald-950 font-medium">
+                          ✓ {rec}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Section 1: Relevant Grants (PRD §8) */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-paper-line pb-2">
+                      <h3 className="font-serif text-lg font-bold text-ink">
+                        Relevant Open Grants ({analysisReport.matchedGrants.length})
+                      </h3>
+                      <span className="text-xs text-ink-faint">Ranked by eligibility compatibility</span>
+                    </div>
+
+                    <div className="grid gap-6">
+                      {analysisReport.matchedGrants.map((match) => (
+                        <div key={match.grant.id} className="rounded-xl border border-paper-line bg-paper-raised p-6 shadow-sm space-y-4">
+                          <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                            <div>
+                              <div className="flex items-center gap-2 text-xs text-ink-faint">
+                                <span className="font-semibold text-ink-soft uppercase">{match.grant.funderName}</span>
+                                <span>&bull;</span>
+                                <span>{match.grant.originalSource}</span>
+                              </div>
+                              <h4 className="font-serif text-lg font-bold text-ink mt-0.5">{match.grant.grantName}</h4>
+                              <p className="text-xs text-ink-soft mt-1 leading-relaxed">{match.relevanceExplanation}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-xs font-mono font-bold text-stamp-dark bg-stamp-tint px-2.5 py-1 rounded">
+                                {match.matchScore}% Match ({match.compatibilityLevel})
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Compatibility Indicators Matrix (PRD §8) */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-3 border-y border-paper-line text-xs">
+                            <div>
+                              <span className="text-ink-faint block">Eligibility</span>
+                              <span className="font-semibold text-emerald-800">{match.eligibilityCompatibility.status}</span>
+                            </div>
+                            <div>
+                              <span className="text-ink-faint block">Funding Alignment</span>
+                              <span className="font-semibold text-ink">{match.fundingCompatibility.status}</span>
+                            </div>
+                            <div>
+                              <span className="text-ink-faint block">Geography</span>
+                              <span className="font-semibold text-ink">{match.geographicCompatibility.status}</span>
+                            </div>
+                            <div>
+                              <span className="text-ink-faint block">Sector Fit</span>
+                              <span className="font-semibold text-ink">{match.sectorCompatibility.status}</span>
+                            </div>
+                          </div>
+
+                          {/* Matched Characteristics & Potential Concerns */}
+                          <div className="grid md:grid-cols-2 gap-4 text-xs">
+                            <div className="space-y-1.5 bg-paper p-3 rounded border border-paper-line">
+                              <span className="font-semibold text-ink">Matched Characteristics</span>
+                              <ul className="list-disc pl-4 space-y-1 text-ink-soft">
+                                {match.matchedCharacteristics.map((char, idx) => (
+                                  <li key={idx}>{char}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="space-y-1.5 bg-paper p-3 rounded border border-paper-line">
+                              <span className="font-semibold text-amber-950">Potential Concerns &amp; Gaps</span>
+                              <ul className="list-disc pl-4 space-y-1 text-ink-soft">
+                                {match.potentialConcerns.map((con, idx) => (
+                                  <li key={idx}>{con}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+
+                          {/* Action Footer: Write Your First Grant (PRD §14) */}
+                          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-paper-line">
+                            <span className="text-xs text-ink-faint">
+                              <b>Recommended Action:</b> {match.recommendedNextAction}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!savedGrants.some((g) => g.id === match.grant.id)) {
+                                    setSavedGrants((prev) => [...prev, match.grant]);
+                                    alert(`"${match.grant.grantName}" added to Tracker.`);
+                                  }
+                                }}
+                                className="rounded bg-paper px-3 py-1.5 text-xs font-semibold border border-paper-line text-ink-soft hover:text-ink"
+                              >
+                                Save Grant
+                              </button>
+                              <Link
+                                href={`/workspace?tab=research&grantId=${match.grant.id}&q=${encodeURIComponent(match.grant.grantName)}`}
+                                className="rounded bg-paper px-3 py-1.5 text-xs font-semibold border border-paper-line text-ink-soft hover:text-ink"
+                              >
+                                Deep Research
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab("proposals")}
+                                className="rounded bg-stamp-dark px-4 py-1.5 text-xs font-semibold text-paper shadow-sm hover:bg-stamp transition-all"
+                              >
+                                Write Your First Grant &rarr;
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Section 2: Relevant Foundations & Funders (PRD §8) */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-paper-line pb-2">
+                      <h3 className="font-serif text-lg font-bold text-ink">
+                        Relevant Foundations &amp; Institutional Funders ({analysisReport.matchedFunders.length})
+                      </h3>
+                      <span className="text-xs text-ink-faint">Long-term philanthropic and grantmakers</span>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {analysisReport.matchedFunders.map((funderMatch) => (
+                        <div key={funderMatch.funder.id} className="rounded-xl border border-paper-line bg-paper-raised p-5 shadow-sm space-y-3">
+                          <div>
+                            <span className="text-[11px] font-semibold text-ink-faint uppercase">{funderMatch.funder.funderType}</span>
+                            <h4 className="font-serif text-base font-bold text-ink mt-0.5">{funderMatch.funder.name}</h4>
+                            <p className="text-xs text-ink-soft mt-1 leading-relaxed">{funderMatch.whyRelevant}</p>
+                          </div>
+                          <div className="text-xs text-ink-faint">
+                            <b>Strategic Approach:</b> {funderMatch.strategicApproach}
+                          </div>
+                          <div className="pt-2 border-t border-paper-line flex justify-end">
+                            <Link
+                              href={`/workspace?tab=research&mode=funder_research&q=${encodeURIComponent(funderMatch.funder.name)}`}
+                              className="rounded bg-paper px-3 py-1.5 text-xs font-semibold border border-paper-line text-ink hover:border-ink/30"
+                            >
+                              Research Funder &rarr;
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: LIVE WEB RESEARCH */}
+          {activeTab === "research" && (
+            <WebResearchPanel
+              orgContext={{
+                orgName: orgProfile.orgName,
+                country: orgProfile.country,
+                sector: orgProfile.sector,
+                project: orgProfile.projectName,
+              }}
+            />
+          )}
+
+          {/* TAB 4: PROPOSALS WORKSPACE (PRD §16, §18, §19) */}
+          {activeTab === "proposals" && (
+            <ProposalWorkspaceEditor
+              initialGrantName={analysisReport?.matchedGrants[0]?.grant.grantName}
+              initialFunderName={analysisReport?.matchedGrants[0]?.grant.funderName}
+              grantId={analysisReport?.matchedGrants[0]?.grant.id}
+              orgName={orgProfile.orgName}
+              country={orgProfile.country}
+            />
+          )}
+
+          {/* TAB 5: DATA ROOM (PRD §20, §21, §22, §23) */}
+          {activeTab === "documents" && (
+            <DataRoomManager orgName={orgProfile.orgName} />
+          )}
+
+          {/* TAB 6: 24-STEP SOP (PRD §31) */}
+          {activeTab === "sops" && (
+            <GrantSopPipeline />
+          )}
+
+          {/* TAB 7: SCORECARD */}
+          {activeTab === "scorecard" && (
+            <div className="space-y-6">
+              <div className="rounded-xl border border-paper-line bg-paper-raised p-6 shadow-sm space-y-4">
+                <h3 className="font-serif text-xl font-bold text-ink">Institutional Readiness Evaluation</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
+                  <div className="p-3 bg-paper rounded border border-paper-line">
+                    <span className="text-ink-faint block">Profile Score</span>
+                    <span className="text-lg font-serif font-bold text-ink">{scorecard.categoryScores.orgProfile}%</span>
+                  </div>
+                  <div className="p-3 bg-paper rounded border border-paper-line">
+                    <span className="text-ink-faint block">Legal Compliance</span>
+                    <span className="text-lg font-serif font-bold text-ink">{scorecard.categoryScores.legalDocumentation}%</span>
+                  </div>
+                  <div className="p-3 bg-paper rounded border border-paper-line">
+                    <span className="text-ink-faint block">Impact Baseline</span>
+                    <span className="text-lg font-serif font-bold text-ink">{scorecard.categoryScores.impactDocumentation}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 8: REAL ANALYTICS (PRD §29) */}
+          {activeTab === "analytics" && (
+            <div className="space-y-6">
+              {savedGrants.length === 0 ? (
+                /* Clean Zero State (PRD §29) */
+                <div className="rounded-xl border border-dashed border-paper-line p-12 text-center bg-paper-raised/40 space-y-3">
+                  <h3 className="font-serif text-lg font-semibold text-ink">No Analytics Yet</h3>
+                  <p className="text-xs text-ink-soft max-w-md mx-auto">
+                    Create a project and start working on grants to see your funding activity here.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("analysis")}
+                    className="rounded bg-stamp-dark px-4 py-2 text-xs font-semibold text-paper"
+                  >
+                    Explore Grant Matches
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                  <div className="rounded-xl border border-paper-line bg-paper-raised p-4">
+                    <span className="text-ink-faint block">Grants Saved</span>
+                    <span className="text-2xl font-serif font-bold text-ink mt-1">{savedGrants.length}</span>
+                  </div>
+                  <div className="rounded-xl border border-paper-line bg-paper-raised p-4">
+                    <span className="text-ink-faint block">Proposals Drafted</span>
+                    <span className="text-2xl font-serif font-bold text-ink mt-1">1</span>
+                  </div>
+                  <div className="rounded-xl border border-paper-line bg-paper-raised p-4">
+                    <span className="text-ink-faint block">Funding Pipeline</span>
+                    <span className="text-2xl font-serif font-bold text-stamp-dark mt-1">
+                      ${(savedGrants.length * 250000).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-paper-line bg-paper-raised p-4">
+                    <span className="text-ink-faint block">Success Probability</span>
+                    <span className="text-2xl font-serif font-bold text-emerald-800 mt-1">Active</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Organization Setup Modal */}
+      {showOrgModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
+          <form
+            onSubmit={handleCreateOrganization}
+            className="w-full max-w-xl rounded-2xl border border-paper-line bg-paper-raised p-6 shadow-2xl space-y-4 my-8"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-paper-line">
+              <h3 className="font-serif text-lg font-bold text-ink">
+                {hasOrganization ? "Edit Organization Profile" : "Create Your Organization"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowOrgModal(false)}
+                className="text-xs text-ink-faint hover:text-ink"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <label className="block font-medium text-ink mb-1">Organization Name</label>
+                <label className="block text-ink-soft font-medium mb-1">Organization Name *</label>
                 <input
+                  required
                   type="text"
                   value={orgProfile.orgName}
                   onChange={(e) => setOrgProfile({ ...orgProfile, orgName: e.target.value })}
-                  className="w-full rounded-xl border border-paper-line bg-paper px-3 py-2 text-ink outline-none"
+                  placeholder="e.g. AgriSphere Solutions"
+                  className="w-full rounded border border-paper-line bg-paper px-3 py-2 text-ink outline-none"
                 />
               </div>
+
               <div>
-                <label className="block font-medium text-ink mb-1">Organization Type</label>
+                <label className="block text-ink-soft font-medium mb-1">Project Name</label>
                 <input
                   type="text"
-                  value={orgProfile.orgType}
-                  onChange={(e) => setOrgProfile({ ...orgProfile, orgType: e.target.value })}
-                  className="w-full rounded-xl border border-paper-line bg-paper px-3 py-2 text-ink outline-none"
+                  value={orgProfile.projectName}
+                  onChange={(e) => setOrgProfile({ ...orgProfile, projectName: e.target.value })}
+                  placeholder="e.g. Solar Cold Chain Initiative"
+                  className="w-full rounded border border-paper-line bg-paper px-3 py-2 text-ink outline-none"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block font-medium text-ink mb-1">Country</label>
+                <label className="block text-ink-soft font-medium mb-1">Country *</label>
                 <input
+                  required
                   type="text"
                   value={orgProfile.country}
                   onChange={(e) => setOrgProfile({ ...orgProfile, country: e.target.value })}
-                  className="w-full rounded-xl border border-paper-line bg-paper px-3 py-2 text-ink outline-none"
+                  placeholder="e.g. Nigeria"
+                  className="w-full rounded border border-paper-line bg-paper px-3 py-2 text-ink outline-none"
                 />
               </div>
+
               <div>
-                <label className="block font-medium text-ink mb-1">Industry / Sector</label>
+                <label className="block text-ink-soft font-medium mb-1">Sector / Focus</label>
                 <input
                   type="text"
                   value={orgProfile.sector}
                   onChange={(e) => setOrgProfile({ ...orgProfile, sector: e.target.value })}
-                  className="w-full rounded-xl border border-paper-line bg-paper px-3 py-2 text-ink outline-none"
+                  placeholder="e.g. Clean Energy"
+                  className="w-full rounded border border-paper-line bg-paper px-3 py-2 text-ink outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-ink-soft font-medium mb-1">Organization Legal Type</label>
+                <select
+                  value={orgProfile.orgType}
+                  onChange={(e) => setOrgProfile({ ...orgProfile, orgType: e.target.value })}
+                  className="w-full rounded border border-paper-line bg-paper px-2.5 py-2 text-ink outline-none"
+                >
+                  <option value="Startup">Startup</option>
+                  <option value="SME">SME</option>
+                  <option value="NGO">NGO / Non-profit</option>
+                  <option value="Social Enterprise">Social Enterprise</option>
+                  <option value="University">University / Academic</option>
+                  <option value="Research Institution">Research Institution</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-ink-soft font-medium mb-1">Funding Target (USD)</label>
+                <input
+                  type="number"
+                  value={orgProfile.fundingRequirement}
+                  onChange={(e) => setOrgProfile({ ...orgProfile, fundingRequirement: Number(e.target.value) })}
+                  className="w-full rounded border border-paper-line bg-paper px-3 py-2 text-ink outline-none"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block font-medium text-ink mb-1">Problem Being Solved</label>
+            <div className="space-y-1 text-xs">
+              <label className="block text-ink-soft font-medium">Problem Statement</label>
               <textarea
-                rows={3}
+                rows={2}
                 value={orgProfile.problemStatement}
                 onChange={(e) => setOrgProfile({ ...orgProfile, problemStatement: e.target.value })}
-                className="w-full rounded-xl border border-paper-line bg-paper px-3 py-2 text-ink outline-none leading-relaxed"
+                placeholder="What critical market or community challenge does this project solve?"
+                className="w-full rounded border border-paper-line bg-paper p-2.5 text-ink outline-none"
               />
             </div>
 
-            <div>
-              <label className="block font-medium text-ink mb-1">Proposed Solution & Business Model</label>
+            <div className="space-y-1 text-xs">
+              <label className="block text-ink-soft font-medium">Proposed Solution</label>
               <textarea
-                rows={3}
+                rows={2}
                 value={orgProfile.solutionStatement}
                 onChange={(e) => setOrgProfile({ ...orgProfile, solutionStatement: e.target.value })}
-                className="w-full rounded-xl border border-paper-line bg-paper px-3 py-2 text-ink outline-none leading-relaxed"
+                placeholder="How does your technology or intervention solve this problem?"
+                className="w-full rounded border border-paper-line bg-paper p-2.5 text-ink outline-none"
               />
             </div>
 
-            <div>
-              <label className="block font-medium text-ink mb-1">Target Beneficiaries & Impact Reach</label>
-              <input
-                type="text"
-                value={orgProfile.targetBeneficiaries}
-                onChange={(e) => setOrgProfile({ ...orgProfile, targetBeneficiaries: e.target.value })}
-                className="w-full rounded-xl border border-paper-line bg-paper px-3 py-2 text-ink outline-none"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: SCORECARD */}
-      {activeTab === "scorecard" && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-serif text-xl font-bold text-ink">Grant Readiness Scorecard</h2>
-              <p className="text-xs text-ink-soft mt-0.5">
-                Objective readiness audit based on funder compliance rubrics.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => downloadScorecardExcel(scorecard, orgProfile.orgName)}
-              className="rounded-xl border border-paper-line bg-paper px-4 py-2 text-xs font-semibold text-ink-soft hover:bg-paper-raised hover:text-ink transition-colors flex items-center gap-1.5"
-            >
-              <span>📊 Export Excel Scorecard</span>
-            </button>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-3">
-            <div className="rounded-2xl border border-paper-line bg-paper-raised p-6 text-center space-y-2">
-              <span className="text-xs font-mono uppercase text-ink-faint">Overall Readiness</span>
-              <div className="font-serif text-5xl font-bold text-ink">{scorecard.overallScore}%</div>
-              <p className="text-xs font-semibold text-emerald-800">Grade {scorecard.grade} — Competitive</p>
+            <div className="flex items-center gap-4 text-xs pt-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orgProfile.hasIncorporation}
+                  onChange={(e) => setOrgProfile({ ...orgProfile, hasIncorporation: e.target.checked })}
+                />
+                <span>Incorporated Legal Entity</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orgProfile.hasAuditedFinancials}
+                  onChange={(e) => setOrgProfile({ ...orgProfile, hasAuditedFinancials: e.target.checked })}
+                />
+                <span>2-Year Audited Financials</span>
+              </label>
             </div>
 
-            <div className="md:col-span-2 rounded-2xl border border-paper-line bg-paper-raised p-6 space-y-3">
-              <h3 className="text-xs font-bold text-ink">Readiness Breakdown by Dimension</h3>
-              <div className="space-y-2.5 text-xs">
-                {Object.entries(scorecard.categoryScores).map(([key, val]) => (
-                  <div key={key} className="space-y-1">
-                    <div className="flex justify-between text-ink-soft capitalize">
-                      <span>{key.replace(/([A-Z])/g, " $1")}</span>
-                      <span className="font-bold text-ink">{val}%</span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-paper border border-paper-line overflow-hidden">
-                      <div
-                        className="h-full bg-ink rounded-full transition-all"
-                        style={{ width: `${val}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="rounded-2xl border border-paper-line bg-paper-raised p-6 space-y-3">
-              <h3 className="text-xs font-bold text-emerald-900">Key Strengths</h3>
-              <ul className="space-y-1.5 text-xs text-ink-soft">
-                {scorecard.strengths.map((s, idx) => (
-                  <li key={idx} className="flex items-start gap-1.5">
-                    <span className="text-emerald-700 font-bold">✓</span>
-                    <span>{s}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-2xl border border-paper-line bg-paper-raised p-6 space-y-3">
-              <h3 className="text-xs font-bold text-amber-900">Gaps & Action Items</h3>
-              <ul className="space-y-1.5 text-xs text-amber-900">
-                {scorecard.gaps.map((g, idx) => (
-                  <li key={idx} className="flex items-start gap-1.5">
-                    <span>⚠</span>
-                    <span>{g}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: DATA ROOM & DOCUMENTS */}
-      {activeTab === "documents" && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="font-serif text-xl font-bold text-ink">Organization Data Room</h2>
-              <p className="text-xs text-ink-soft mt-0.5">
-                Structured repository with Google Drive-style permissions (Owner, Editor, Commenter, Viewer).
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
+            <div className="pt-3 flex items-center justify-end gap-3 border-t border-paper-line">
               <button
                 type="button"
-                onClick={() => handleRequestDocument("2024-2025 Audited Financial Accounts")}
-                className="rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 transition-colors"
+                onClick={() => setShowOrgModal(false)}
+                className="rounded px-4 py-2 text-xs font-semibold text-ink-soft hover:text-ink"
               >
-                + Request Missing Document
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="rounded bg-stamp-dark px-5 py-2 text-xs font-semibold text-paper hover:bg-stamp transition-all shadow-sm"
+              >
+                Save &amp; Open Workspace &rarr;
               </button>
             </div>
-          </div>
-
-          {requestedDocNotice && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900 font-semibold">
-              ✓ {requestedDocNotice}
-            </div>
-          )}
-
-          <div className="rounded-2xl border border-paper-line bg-paper-raised overflow-hidden shadow-sm">
-            <div className="grid grid-cols-12 border-b border-paper-line bg-paper px-4 py-2.5 text-[11px] font-semibold text-ink-faint">
-              <span className="col-span-5">Document Name</span>
-              <span className="col-span-2">Folder / Category</span>
-              <span className="col-span-2">Permission</span>
-              <span className="col-span-2">Uploaded</span>
-              <span className="col-span-1 text-right">Size</span>
-            </div>
-
-            <div className="divide-y divide-paper-line text-xs">
-              {documents.map((doc) => (
-                <div key={doc.id} className="grid grid-cols-12 items-center px-4 py-3 hover:bg-paper/60 transition-colors">
-                  <div className="col-span-5 flex items-center gap-2 font-medium text-ink">
-                    <span>📄</span>
-                    <span className="truncate">{doc.name}</span>
-                  </div>
-                  <span className="col-span-2 text-ink-soft text-[11px]">{doc.folder}</span>
-                  <div className="col-span-2">
-                    <span className="rounded-md border border-paper-line bg-paper px-2 py-0.5 text-[10px] font-semibold text-ink-soft">
-                      {doc.permission}
-                    </span>
-                  </div>
-                  <span className="col-span-2 text-ink-faint text-[11px]">{doc.uploadedAt}</span>
-                  <span className="col-span-1 text-right text-ink-faint text-[11px]">{doc.size}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 5: SOPS */}
-      {activeTab === "sops" && (
-        <div className="space-y-4 max-w-3xl">
-          <div>
-            <h2 className="font-serif text-xl font-bold text-ink">Standard Operating Procedures (SOPs)</h2>
-            <p className="text-xs text-ink-soft mt-0.5">
-              Operational workflows governing grant research, proposal drafting, and compliance.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              {
-                title: "Grant Research & Verification SOP",
-                owner: "Grant Writer / Research Lead",
-                sla: "48 hours from discovery",
-                desc: "Check official funder portals, verify geographic eligibility, confirm deadline, extract required document checklist.",
-              },
-              {
-                title: "Proposal Writing & Evidence SOP",
-                owner: "Lead Grant Consultant",
-                sla: "7 business days",
-                desc: "Draft 5 core narrative sections grounded in Master Profile. Ensure quantitative beneficiary metrics have verified citations.",
-              },
-              {
-                title: "Financial Budget Justification SOP",
-                owner: "Finance Officer & Founder",
-                sla: "3 business days",
-                desc: "Structure budget line items with quantity and unit costs. Reconcile personnel, operational, and M&E allocations within allowable limits.",
-              },
-              {
-                title: "Founder Approval & Submission SOP",
-                owner: "Founder / Executive Director",
-                sla: "24 hours prior to deadline",
-                desc: "Mandatory human-in-the-loop review. Founder inspects proposal, budget, and supporting docs before authorizing submission.",
-              },
-            ].map((sop, i) => (
-              <div key={i} className="rounded-2xl border border-paper-line bg-paper-raised p-5 shadow-sm space-y-2">
-                <div className="flex items-start justify-between">
-                  <h3 className="font-serif text-sm font-bold text-ink">{sop.title}</h3>
-                  <span className="rounded-full bg-paper border border-paper-line px-2 py-0.5 text-[10px] font-mono text-ink-faint">
-                    SLA: {sop.sla}
-                  </span>
-                </div>
-                <p className="text-xs text-ink-soft leading-relaxed">{sop.desc}</p>
-                <div className="text-[11px] text-ink-faint pt-1 border-t border-paper-line">
-                  Responsible Role: <span className="font-medium text-ink">{sop.owner}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 6: APPROVALS */}
-      {activeTab === "approvals" && (
-        <div className="space-y-4 max-w-2xl">
-          <div>
-            <h2 className="font-serif text-xl font-bold text-ink">Founder Approval Workflows</h2>
-            <p className="text-xs text-ink-soft mt-0.5">
-              Review and sign off on completed grant application packages prior to submission.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-paper-line bg-paper-raised p-6 shadow-sm space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="rounded-full bg-purple-50 border border-purple-200 px-2 py-0.5 text-[10px] font-bold text-purple-900 uppercase">
-                  Pending Founder Review
-                </span>
-                <h3 className="font-serif text-base font-bold text-ink mt-1">
-                  TEF Entrepreneurship Programme ($50,000 USD)
-                </h3>
-                <p className="text-xs text-ink-faint">Prepared by David Mwangi &bull; Application v2</p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-paper-line bg-paper p-3 text-xs space-y-1.5">
-              <div className="flex items-center gap-2 text-emerald-800">
-                <span>✓</span> <span>Master Organization Profile Verified</span>
-              </div>
-              <div className="flex items-center gap-2 text-emerald-800">
-                <span>✓</span> <span>Technical & Business Narrative Draft Complete</span>
-              </div>
-              <div className="flex items-center gap-2 text-emerald-800">
-                <span>✓</span> <span>Budget Line Items Reconciled ($50,000)</span>
-              </div>
-              <div className="flex items-center gap-2 text-emerald-800">
-                <span>✓</span> <span>Pitch Deck & Team CVs Attached</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 pt-2">
-              <Link
-                href="/tracker"
-                className="rounded-xl bg-ink px-4 py-2 text-xs font-semibold text-paper hover:bg-stamp-dark transition-all"
-              >
-                Inspect in Grant Tracker & Review &rarr;
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 7: ANALYTICS */}
-      {activeTab === "analytics" && (
-        <div className="space-y-6">
-          <div>
-            <h2 className="font-serif text-xl font-bold text-ink">Organization Funding Analytics</h2>
-            <p className="text-xs text-ink-soft mt-0.5">
-              Performance metrics across your grant pipeline.
-            </p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-paper-line bg-paper-raised p-5 shadow-sm text-center">
-              <span className="text-xs font-mono text-ink-faint">Total Funding Requested</span>
-              <p className="font-serif text-3xl font-bold text-ink mt-2">$800,000</p>
-              <p className="text-[11px] text-ink-soft mt-1">Across 3 submitted & active bids</p>
-            </div>
-
-            <div className="rounded-2xl border border-paper-line bg-paper-raised p-5 shadow-sm text-center">
-              <span className="text-xs font-mono text-ink-faint">Total Funding Won</span>
-              <p className="font-serif text-3xl font-bold text-emerald-900 mt-2">$250,000</p>
-              <p className="text-[11px] text-emerald-800 mt-1">USAID Feed the Future Grant</p>
-            </div>
-
-            <div className="rounded-2xl border border-paper-line bg-paper-raised p-5 shadow-sm text-center">
-              <span className="text-xs font-mono text-ink-faint">Win Rate</span>
-              <p className="font-serif text-3xl font-bold text-ink mt-2">66.7%</p>
-              <p className="text-[11px] text-ink-soft mt-1">2 won / ongoing out of 3</p>
-            </div>
-          </div>
+          </form>
         </div>
       )}
     </div>

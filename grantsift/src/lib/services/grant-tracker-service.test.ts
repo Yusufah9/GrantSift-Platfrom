@@ -1,8 +1,39 @@
 import { describe, it, expect } from "vitest";
-import { GrantTrackerService } from "./grant-tracker-service";
+import { GrantTrackerService, type TrackedGrantApplication } from "./grant-tracker-service";
+
+const TEST_APPLICATIONS: TrackedGrantApplication[] = [
+  {
+    id: "app-sefa-1",
+    grantId: "grant-afdb-clean-energy",
+    grantTitle: "Sustainable Energy Fund for Africa (SEFA) Catalyst Grant",
+    funderName: "African Development Bank (AfDB)",
+    organizationName: "SolarBridge Mini-Grids",
+    targetAmountUsd: 500000,
+    deadline: "2026-12-15",
+    stage: "writing",
+    founderApprovalStatus: "none",
+    missingDocuments: ["2-Year Audited Accounts"],
+    notes: "High strategic fit for off-grid expansion.",
+    approvalHistory: [],
+  },
+  {
+    id: "app-tef-2",
+    grantId: "grant-tony-elumelu-2026",
+    grantTitle: "TEF Entrepreneurship Programme Seed Grant",
+    funderName: "Tony Elumelu Foundation",
+    organizationName: "SolarBridge Mini-Grids",
+    targetAmountUsd: 50000,
+    deadline: "2026-11-30",
+    stage: "awarded",
+    founderApprovalStatus: "approved",
+    missingDocuments: [],
+    notes: "Seed tranche cleared.",
+    approvalHistory: [],
+  },
+];
 
 describe("GrantTrackerService", () => {
-  const service = new GrantTrackerService();
+  const service = new GrantTrackerService(TEST_APPLICATIONS);
 
   it("lists all active grant applications across stages", () => {
     const apps = service.listApplications();

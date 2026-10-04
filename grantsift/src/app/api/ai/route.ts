@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { AIService } from "@/lib/ai/ai-service";
+import { EntitlementService } from "@/lib/services/entitlement-service";
 
 export async function POST(req: Request) {
   try {
@@ -20,10 +21,17 @@ export async function POST(req: Request) {
       .eq("id", user.id)
       .maybeSingle();
 
-    const isProUser =
-      profile?.role === "admin" ||
-      user.user_metadata?.is_pro === true ||
-      user.user_metadata?.plan === "pro";
+    const userContext = {
+      id: user.id,
+      email: user.email,
+      role: profile?.role,
+      is_pro: user.user_metadata?.is_pro === true,
+      plan: user.user_metadata?.plan,
+      entitlement: user.user_metadata?.entitlement,
+      has_paid: user.user_metadata?.has_paid === true,
+    };
+
+    const isProUser = EntitlementService.can(userContext, "ai_proposal_generation");
 
     const body = await req.json();
     const { action, payload } = body;
@@ -64,7 +72,7 @@ export async function POST(req: Request) {
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || "An error occurred in AI service." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
