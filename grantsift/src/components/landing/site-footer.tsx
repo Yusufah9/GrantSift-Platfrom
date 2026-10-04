@@ -99,23 +99,16 @@ export function SiteFooter() {
             ))}
           </div>
 
-          {/* Iconic Giant Brand Wordmark Banner with Official Emblem */}
-          <div className="mt-14 border-t border-ink/10 pt-8 text-center">
+          {/* Iconic Giant Brand Wordmark Banner (Instrumentl Style - Pure Text) */}
+          <div className="mt-14 border-t border-ink/10 pt-8 text-center overflow-hidden">
             <Link
               href="/"
               aria-label="GrantSift Home"
-              className="group flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 md:gap-10 overflow-hidden py-4"
+              className="group block overflow-hidden py-3 select-none"
             >
-              <img
-                src="/images/grantsift-logo-mark.png"
-                alt=""
-                className="h-16 sm:h-24 md:h-32 lg:h-40 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-              />
-              <img
-                src="/images/grantsift-footer-wordmark.jpg"
-                alt="GrantSift"
-                className="h-14 sm:h-20 md:h-28 lg:h-36 w-auto max-w-[85vw] object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.01]"
-              />
+              <p className="font-sans font-black tracking-[-0.045em] leading-[0.88] text-[13vw] sm:text-[14vw] md:text-[15vw] lg:text-[11.5rem] text-ink transition-transform duration-300 group-hover:scale-[1.01] m-0 p-0 text-center">
+                GrantSift
+              </p>
             </Link>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between border-t border-ink/5 pt-6 text-xs text-ink-faint">
               <p>© {new Date().getFullYear()} GrantSift. All rights reserved.</p>

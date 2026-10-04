@@ -54,24 +54,17 @@ export function AuthShell({
         >
           <Link
             href="/"
-            className="group flex items-center gap-2 font-serif text-xl tracking-tight text-[#191C19] transition-opacity hover:opacity-80"
+            className="group flex items-center gap-2.5 text-xl tracking-tight text-[#191C19] transition-opacity hover:opacity-80"
           >
-            <span
-              className="flex h-7 w-7 items-center justify-center rounded text-xs font-bold text-white"
-              style={{ background: "#B4661E" }}
-            >
-              G
-            </span>
-            <span>
-              Grant<span style={{ color: "#B4661E" }}>Sift</span>
+            <img
+              src="/images/grantsift-logo-mark.png"
+              alt="GrantSift"
+              className="h-8 w-8 object-contain"
+            />
+            <span className="font-sans font-bold tracking-tight text-ink text-xl">
+              GrantSift
             </span>
           </Link>
-          <span
-            className="hidden sm:inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest"
-            style={{ background: "#B4661E18", color: "#8F4F17" }}
-          >
-            Secure ·  Brevo
-          </span>
         </div>
 
         {/* Card body */}
@@ -96,7 +89,7 @@ export function AuthShell({
 
       {/* Bottom branding */}
       <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center text-[11px] text-white/30">
-        © {new Date().getFullYear()} GrantSift · Secured by Supabase · Emails via Brevo
+        © {new Date().getFullYear()} GrantSift
       </p>
     </main>
   );
