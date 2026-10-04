@@ -5,14 +5,17 @@ import { PostRepository } from "@/lib/repositories/post-repository";
 import { TaxonomyRepository } from "@/lib/repositories/taxonomy-repository";
 import type { PostInput } from "@/lib/validation/blog";
 import { AppError } from "@/lib/errors/app-error";
+import { BlogMediaService } from "./blog-media-service";
 
 export class BlogService {
   private readonly posts: PostRepository;
   private readonly taxonomy: TaxonomyRepository;
+  private readonly media: BlogMediaService;
 
   constructor(private readonly supabase: SupabaseClient<Database>) {
     this.posts = new PostRepository(supabase);
     this.taxonomy = new TaxonomyRepository(supabase);
+    this.media = new BlogMediaService();
   }
 
   listPublished() {
@@ -27,8 +30,9 @@ export class BlogService {
     return this.posts.listAll();
   }
 
-  getById(id: string) {
-    return this.posts.getById(id);
+  async getById(id: string) {
+    const post = await this.posts.getById(id);
+    return post ? this.media.sanitizePostForEdit(post) : null;
   }
 
   listCategories() {
@@ -48,6 +52,11 @@ export class BlogService {
       throw new AppError("VALIDATION_ERROR", "That slug is already in use. Choose another.");
     }
 
+    const mediaValidation = this.media.validate(input.featuredImage);
+    if (!mediaValidation.valid) {
+      throw new AppError("VALIDATION_ERROR", mediaValidation.error ?? "Invalid image provided.");
+    }
+
     const authorId = await this.ensureAuthor(userId);
     const categoryId = input.categoryName ? await this.resolveCategory(input.categoryName) : null;
 
@@ -56,7 +65,7 @@ export class BlogService {
       slug: input.slug,
       excerpt: input.excerpt || null,
       content: input.content,
-      featured_image: input.featuredImage || null,
+      featured_image: mediaValidation.sanitizedValue ?? null,
       author_id: authorId,
       category_id: categoryId,
       status: input.status,
@@ -77,6 +86,11 @@ export class BlogService {
     const existing = await this.posts.getById(id);
     if (!existing) throw new AppError("VALIDATION_ERROR", "Post not found.");
 
+    const mediaValidation = this.media.validate(input.featuredImage);
+    if (!mediaValidation.valid) {
+      throw new AppError("VALIDATION_ERROR", mediaValidation.error ?? "Invalid image provided.");
+    }
+
     const categoryId = input.categoryName ? await this.resolveCategory(input.categoryName) : null;
     const becomingPublished = input.status === "published" && existing.status !== "published";
 
@@ -85,7 +99,7 @@ export class BlogService {
       slug: input.slug,
       excerpt: input.excerpt || null,
       content: input.content,
-      featured_image: input.featuredImage || null,
+      featured_image: mediaValidation.sanitizedValue ?? null,
       category_id: categoryId,
       status: input.status,
       meta_description: input.metaDescription || null,

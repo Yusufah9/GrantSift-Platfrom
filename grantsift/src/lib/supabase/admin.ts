@@ -1,7 +1,14 @@
 import "server-only";
+import dns from "node:dns";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { requireEnv } from "@/lib/config";
 import type { Database } from "@/lib/supabase/database.types";
+
+try {
+  dns.setDefaultResultOrder("ipv4first");
+} catch {
+  // Ignored in non-supported runtimes
+}
 
 /**
  * Bypasses Row Level Security. Only for operations RLS genuinely cannot
