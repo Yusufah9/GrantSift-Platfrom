@@ -71,7 +71,14 @@ export function SiteFooter() {
           </div>
           <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-[1.4fr_repeat(5,1fr)]">
             <div>
-              <p className="text-2xl font-bold tracking-tight">GrantSift</p>
+              <div className="flex items-center gap-2.5">
+                <img
+                  src="/images/grantsift-logo-mark.png"
+                  alt="GrantSift"
+                  className="h-7 w-7 object-contain"
+                />
+                <p className="text-2xl font-bold tracking-tight">GrantSift</p>
+              </div>
               <p className="mt-3 max-w-xs text-sm text-ink-soft">
                 Centralized Grant Management Operating System. Sourcing, matchmaking, proposal drafting, founder approvals, and post-award management.
               </p>
@@ -92,13 +99,22 @@ export function SiteFooter() {
             ))}
           </div>
 
-          {/* Iconic Giant Brand Wordmark Banner (Instrumentl / Antigravity Style) */}
+          {/* Iconic Giant Brand Wordmark Banner with Official Emblem */}
           <div className="mt-14 border-t border-ink/10 pt-8 text-center">
-            <Link href="/" aria-label="GrantSift Home" className="group block overflow-hidden py-4">
+            <Link
+              href="/"
+              aria-label="GrantSift Home"
+              className="group flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 md:gap-10 overflow-hidden py-4"
+            >
+              <img
+                src="/images/grantsift-logo-mark.png"
+                alt=""
+                className="h-16 sm:h-24 md:h-32 lg:h-40 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              />
               <img
                 src="/images/grantsift-footer-wordmark.jpg"
                 alt="GrantSift"
-                className="mx-auto w-full max-w-5xl object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.01]"
+                className="h-14 sm:h-20 md:h-28 lg:h-36 w-auto max-w-[85vw] object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.01]"
               />
             </Link>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between border-t border-ink/5 pt-6 text-xs text-ink-faint">

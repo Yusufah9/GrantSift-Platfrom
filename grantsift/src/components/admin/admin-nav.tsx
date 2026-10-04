@@ -12,7 +12,8 @@ export function AdminNav() {
     <header className="border-b border-paper-line">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-8">
-          <Link href="/admin" className="font-serif text-lg text-ink">
+          <Link href="/admin" className="flex items-center gap-2 font-serif text-lg text-ink">
+            <img src="/images/grantsift-logo-mark.png" alt="GrantSift" className="h-5 w-5 object-contain" />
             GrantSift admin
           </Link>
           <nav className="flex items-center gap-6 text-sm text-ink-soft">

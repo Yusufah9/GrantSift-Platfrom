@@ -22,7 +22,7 @@ export function AppNav({ email, isAdmin }: { email: string; isAdmin: boolean }) 
       <div className="flex items-center justify-between rounded-full border border-ink/10 bg-paper-raised/90 py-2.5 pl-5 pr-4 backdrop-blur-xl shadow-sm">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2 text-lg font-bold tracking-tight text-ink">
-            <span aria-hidden className="h-6 w-6 rounded-full" style={{ background: "radial-gradient(circle at 32% 26%, #6b6962, #0a0a0a 65%)" }} />
+            <img src="/images/grantsift-logo-mark.png" alt="GrantSift" className="h-6 w-6 object-contain" />
             GrantSift <span className="text-[10px] font-mono uppercase tracking-widest text-ink-faint hidden sm:inline">OS</span>
           </Link>
 

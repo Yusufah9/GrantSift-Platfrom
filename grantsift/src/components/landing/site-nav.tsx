@@ -56,7 +56,7 @@ export function SiteNav() {
       <header className="sticky top-3 z-50 landing-container">
         <div className="flex items-center justify-between rounded-full border border-ink/10 bg-paper-raised/80 py-2 pl-5 pr-2 backdrop-blur-xl shadow-sm">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-            <span aria-hidden className="h-6 w-6 rounded-full" style={{ background: "radial-gradient(circle at 32% 26%, #6b6962, #0a0a0a 65%)" }} />
+            <img src="/images/grantsift-logo-mark.png" alt="GrantSift" className="h-6 w-6 object-contain" />
             GrantSift <span className="text-[10px] font-mono uppercase tracking-widest text-ink-faint hidden sm:inline">OS</span>
           </Link>
           <nav className="hidden items-center gap-6 text-xs font-semibold lg:flex" aria-label="Primary">

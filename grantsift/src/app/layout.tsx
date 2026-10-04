@@ -17,9 +17,22 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GrantSift: grant funding, made clear",
+  title: {
+    default: "GrantSift: grant funding, made clear",
+    template: "%s · GrantSift",
+  },
   description:
     "GrantSift finds grant opportunities, reads donor guidelines for you, and turns them into a plan you can act on. Built for founders, researchers, NGOs and grant offices across Africa.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
