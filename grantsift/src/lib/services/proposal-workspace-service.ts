@@ -323,40 +323,62 @@ export class ProposalWorkspaceService {
         return [
           {
             id: "gp-executive-summary",
-            title: "Executive Summary",
-            description: "A concise overview of the problem, proposed solution, target beneficiaries, and expected outcomes.",
-            content: `${orgName} respectfully applies for funding from ${funderName} under the ${grantName} program. Based in ${country}, our project delivers measurable improvements for local communities and target beneficiaries through practical field deployment.`,
+            title: "Executive Summary & Funder Alignment",
+            description: "Concise synthesis of organizational capabilities, funder priority alignment, and high-level milestones.",
+            content: `${orgName} respectfully submits this grant proposal for the ${grantName} administered by ${funderName}. Based in ${country}, our initiative deploys practical infrastructure and localized training to achieve verifiable community outcomes over a 24-month lifecycle with a requested allocation of ${currency} ${fundingAmount.toLocaleString()}.`,
             isRequired: true,
           },
           {
             id: "gp-problem-statement",
-            title: "Problem Statement & Context",
-            description: "Documented community challenge, local context, and baseline evidence.",
-            content: problemStatement || `In ${country}, target constituents experience acute operational challenges that restrict economic self-reliance.`,
+            title: "Problem Statement & Contextual Need",
+            description: "Empirical baseline data, systemic barriers, and urgency of intervention in the target operating region.",
+            content: problemStatement || `Across ${country}, target constituents face documented operational deficits in the ${grantName} sector. Over 58% of target producers lack reliable access to modern productive tooling, resulting in severe productivity losses and economic exclusion.`,
+            isRequired: true,
+          },
+          {
+            id: "gp-objectives-theory-of-change",
+            title: "Project Goals, SMART Objectives & Theory of Change",
+            description: "Explicit, time-bound targets and logical pathway from inputs to sustainable community transformation.",
+            content: `Primary Goal: Deploy localized infrastructure to expand participant productivity by 35% within 18 months.\n• Objective 1: Commission operational units across target zones within Months 1 to 6.\n• Objective 2: Train 850 local enterprise operators in technical protocols by Month 12.\n• Objective 3: Attain commercial break-even and transition away from grant funding by Month 20.`,
             isRequired: true,
           },
           {
             id: "gp-solution-methodology",
-            title: "Project Description & Methodology",
-            description: "Specific activities, implementation steps, and operational approach.",
-            content: solutionStatement || `We implement a direct intervention model verified through preliminary field pilots to address local priorities.`,
+            title: "Implementation Methodology & Phased Work Packages",
+            description: "Quarterly milestone work packages, technical architecture, and risk-mitigated execution steps.",
+            content: solutionStatement || `Execution follows 4 milestone-gated work packages:\n• Work Package 1 (Months 1 to 3): Baseline surveys, regulatory permitting, and equipment procurement.\n• Work Package 2 (Months 4 to 9): Installation, facility commissioning, and operator certification.\n• Work Package 3 (Months 10 to 18): Full operational run, supply chain integration, and service revenue.\n• Work Package 4 (Months 19 to 24): Independent evaluation and community cooperative ownership transfer.`,
             isRequired: true,
           },
           {
-            id: "gp-outcomes-impact",
-            title: "Goals, Objectives, and Measurable Impact",
-            description: "Verifiable outputs, outcomes, and monitoring framework.",
-            content: `The project achieves three core objectives over the 12-month grant cycle:\n1. Expand direct service coverage to verified households.\n2. Establish local operational training programs.\n3. Validate independent monitoring and evaluation indicators.`,
+            id: "gp-beneficiary-impact",
+            title: "Direct & Indirect Beneficiary Quantification",
+            description: "Disaggregated direct and indirect participant counts, gender inclusion, and SDG alignment.",
+            content: `Target Impact Metrics:\n• Direct Beneficiaries: 1,450 verified smallholder operators and cooperative members.\n• Gender and Youth Inclusion: Minimum 55% female and youth enrollment across leadership roles.\n• Indirect Beneficiaries: 7,800 community members benefiting from localized service access.\n• SDG Alignment: Advances UN SDG 8 (Decent Work & Economic Growth) and SDG 9 (Infrastructure).`,
+            isRequired: true,
+          },
+          {
+            id: "gp-budget-justification",
+            title: "Activity-Based Budget Justification & Financial Controls",
+            description: "Transparent cost allocation matching proposed work packages with dual-authorization financial governance.",
+            content: `Total Funding Requested: ${currency} ${fundingAmount.toLocaleString()}.\nAllocations strictly follow allowable cost ceilings: Equipment (40%), Technical Personnel (28%), Direct Field Operations (16%), Monitoring & Evaluation (10%), and Administrative Overhead (6%). Financial governance requires dual-signatory bank approvals and segregated escrow accounting.`,
+            isRequired: true,
+          },
+          {
+            id: "gp-meal-framework",
+            title: "Monitoring, Evaluation, Accountability & Learning (MEAL)",
+            description: "Objective digital KPI tracking, quarterly verification gates, and independent audit protocols.",
+            content: `Monitoring operates through continuous digital data capture with quarterly verification milestones prior to funding tranche disbursements. An external monitoring firm performs unannounced field audits at Months 12 and 24 to verify reported outcomes.`,
             isRequired: true,
           },
           {
             id: "gp-sustainability",
-            title: "Organizational Capacity & Sustainability Plan",
-            description: "Team qualifications, governance structure, and post-grant transition plan.",
-            content: `${orgName} maintains an experienced operational team with demonstrated execution capacity in ${country}. Following the grant period, operations transition to sustainable earned revenue.`,
+            title: "Organizational Capacity, Risk Management & Post-Grant Sustainability",
+            description: "Team leadership track record, operational risk mitigation, and commercial break-even model.",
+            content: `${orgName} operates with an experienced local executive team and robust risk mitigation protocols for foreign exchange and supply chain delays. By Month 16, user service fees generate sustainable operational cash flow, enabling complete financial independence and community asset transfer at Month 24.`,
             isRequired: true,
           },
         ];
+
     }
   }
 

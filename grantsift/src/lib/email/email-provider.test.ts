@@ -1,19 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { getEmailProvider, isValidSenderAddress, BrevoProvider, NoopProvider } from "@/lib/email/email-provider";
+import { getEmailProvider, isValidSenderAddress, BrevoProvider, NoopProvider, resetEmailProviderCache } from "@/lib/email/email-provider";
 
 describe("getEmailProvider", () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
+    resetEmailProviderCache();
     process.env = { ...originalEnv };
     process.env.EMAIL_PROVIDER = "brevo";
     process.env.BREVO_SMTP_KEY = "test_key";
   });
 
   afterEach(() => {
+    resetEmailProviderCache();
     process.env = originalEnv;
     vi.restoreAllMocks();
   });
+
 
   it("rejects invalid sender formats for Brevo", () => {
     process.env.EMAIL_FROM = "GrantSift";

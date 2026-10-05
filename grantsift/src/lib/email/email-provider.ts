@@ -1,5 +1,12 @@
 import "server-only";
+import dns from "node:dns";
 import nodemailer, { type Transporter } from "nodemailer";
+
+try {
+  dns.setDefaultResultOrder("ipv4first");
+} catch {
+  // Ignored in non-supported runtimes
+}
 
 export interface EmailMessage {
   to: string;
@@ -22,7 +29,7 @@ export function isValidSenderAddress(from: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-/** Sends transactional emails via Brevo SMTP relay. */
+/** Sends transactional emails via Brevo SMTP relay with connection pooling and fast IPv4 routing. */
 export class BrevoProvider implements EmailProvider {
   private transporter: Transporter;
   private fromAddress: string;
@@ -45,11 +52,16 @@ export class BrevoProvider implements EmailProvider {
       host: process.env.BREVO_SMTP_SERVER ?? "smtp-relay.brevo.com",
       port: Number(process.env.BREVO_SMTP_PORT ?? 587),
       secure: false, // 587 uses STARTTLS
+      pool: true,
+      maxConnections: 3,
+      maxMessages: 100,
       auth: {
         user: process.env.BREVO_SMTP_USER ?? "bc10e8001@smtp-brevo.com",
         pass: key,
       },
-      connectionTimeout: 10_000,
+      connectionTimeout: 8_000,
+      greetingTimeout: 5_000,
+      socketTimeout: 10_000,
     });
   }
 
@@ -77,11 +89,23 @@ export class NoopProvider implements EmailProvider {
   }
 }
 
+let cachedProvider: EmailProvider | null = null;
+
+export function resetEmailProviderCache(): void {
+  cachedProvider = null;
+}
+
 export function getEmailProvider(): EmailProvider {
+  if (cachedProvider) return cachedProvider;
+
   const provider = process.env.EMAIL_PROVIDER;
   if (provider === "brevo" && process.env.BREVO_SMTP_KEY) {
-    return new BrevoProvider();
+    cachedProvider = new BrevoProvider();
+    return cachedProvider;
   }
-  return new NoopProvider();
+  cachedProvider = new NoopProvider();
+  return cachedProvider;
 }
+
+
 

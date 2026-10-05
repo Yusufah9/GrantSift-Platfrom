@@ -36,7 +36,8 @@ export async function signUpAction(formData: FormData): Promise<ApiResponse<Sign
     return fail(new AppError("VALIDATION_ERROR", parsed.error.issues[0]?.message ?? "Check the form and try again."));
   }
 
-  const { fullName, email, password } = parsed.data;
+  const { fullName, password } = parsed.data;
+  const email = parsed.data.email.trim().toLowerCase();
   const origin = await getRequestOrigin();
   const admin = createAdminClient();
 
@@ -58,8 +59,12 @@ export async function signUpAction(formData: FormData): Promise<ApiResponse<Sign
     return fail(new AppError("AUTHENTICATION_ERROR", error.message));
   }
 
-  const actionLink = data?.properties?.action_link;
-  if (!actionLink) {
+  const tokenHash = data?.properties?.hashed_token;
+  const directConfirmationLink = tokenHash
+    ? `${origin}/auth/callback?token_hash=${tokenHash}&type=signup&next=/dashboard`
+    : data?.properties?.action_link;
+
+  if (!directConfirmationLink) {
     return fail(new AppError("AUTHENTICATION_ERROR", "Could not generate account verification link."));
   }
 
@@ -74,10 +79,12 @@ export async function signUpAction(formData: FormData): Promise<ApiResponse<Sign
   // Send the confirmation email via Brevo
   const emailService = new EmailService();
   try {
-    await emailService.sendConfirmationEmail(email, fullName, actionLink);
+    await Promise.race([
+      emailService.sendConfirmationEmail(email, fullName, directConfirmationLink),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Confirmation email timeout")), 5000)),
+    ]);
   } catch (emailError) {
     console.error("Brevo failed to send confirmation email:", emailError);
-    // Don't crash signup if mail service had a transient error, provide feedback
   }
 
   const isLocalDev = origin.includes("localhost") || process.env.NODE_ENV === "development";
@@ -85,7 +92,7 @@ export async function signUpAction(formData: FormData): Promise<ApiResponse<Sign
   return ok({
     needsEmailConfirmation: true,
     email,
-    previewConfirmationLink: isLocalDev ? actionLink : undefined,
+    previewConfirmationLink: isLocalDev ? directConfirmationLink : undefined,
   });
 }
 
@@ -94,12 +101,13 @@ export async function resendConfirmationAction(email: string): Promise<ApiRespon
     return fail(new AppError("VALIDATION_ERROR", "Please provide a valid email address."));
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
   const origin = await getRequestOrigin();
   const admin = createAdminClient();
 
   const { data, error } = await admin.auth.admin.generateLink({
     type: "signup",
-    email,
+    email: normalizedEmail,
     password: "TemporaryPassword123!",
     options: {
       redirectTo: `${origin}/auth/callback`,
@@ -112,14 +120,22 @@ export async function resendConfirmationAction(email: string): Promise<ApiRespon
     return ok(null);
   }
 
-  if (data?.properties?.action_link) {
+  const tokenHash = data?.properties?.hashed_token;
+  const directLink = tokenHash
+    ? `${origin}/auth/callback?token_hash=${tokenHash}&type=signup&next=/dashboard`
+    : data?.properties?.action_link;
+
+  if (directLink) {
     const emailService = new EmailService();
     try {
-      await emailService.sendConfirmationEmail(
-        email,
-        data.user?.user_metadata?.full_name || "there",
-        data.properties.action_link
-      );
+      await Promise.race([
+        emailService.sendConfirmationEmail(
+          normalizedEmail,
+          data.user?.user_metadata?.full_name || "there",
+          directLink
+        ),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Email resend timeout")), 5000)),
+      ]);
     } catch (err) {
       console.error("Failed to resend confirmation email via Brevo:", err);
     }
@@ -127,6 +143,7 @@ export async function resendConfirmationAction(email: string): Promise<ApiRespon
 
   return ok(null);
 }
+
 
 export async function loginAction(formData: FormData): Promise<ApiResponse<null>> {
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
@@ -270,7 +287,7 @@ export async function forgotPasswordAction(formData: FormData): Promise<ApiRespo
     return fail(new AppError("VALIDATION_ERROR", parsed.error.issues[0]?.message ?? "Enter a valid email address."));
   }
 
-  const { email } = parsed.data;
+  const email = parsed.data.email.trim().toLowerCase();
   const origin = await getRequestOrigin();
   const admin = createAdminClient();
 
@@ -289,11 +306,18 @@ export async function forgotPasswordAction(formData: FormData): Promise<ApiRespo
     return ok(null);
   }
 
-  const resetLink = data?.properties?.action_link;
+  const tokenHash = data?.properties?.hashed_token;
+  const resetLink = tokenHash
+    ? `${origin}/auth/callback?token_hash=${tokenHash}&type=recovery&next=/reset-password`
+    : data?.properties?.action_link;
+
   if (resetLink) {
     const emailService = new EmailService();
     try {
-      await emailService.sendPasswordResetEmail(email, resetLink);
+      await Promise.race([
+        emailService.sendPasswordResetEmail(email, resetLink),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Password reset email timeout")), 5000)),
+      ]);
     } catch (sendErr) {
       console.error("Failed to send password reset email via Brevo:", sendErr);
     }
@@ -301,6 +325,7 @@ export async function forgotPasswordAction(formData: FormData): Promise<ApiRespo
 
   return ok(null);
 }
+
 
 export async function resetPasswordAction(formData: FormData): Promise<ApiResponse<null>> {
   const parsed = resetPasswordSchema.safeParse(Object.fromEntries(formData));

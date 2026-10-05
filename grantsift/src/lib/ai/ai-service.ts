@@ -411,7 +411,8 @@ ${pastGranteesFormatted}`;
   }
 
   /**
-   * Generates tailored, opportunity-specific grant proposals
+   * Generates tailored, opportunity-specific gra  /**
+   * Generates a comprehensive, opportunity-specific grant proposal (10 distinct sections)
    * grounded in applicant evidence, funder requirements, and zero-markdown formatting rules.
    */
   async generateProposal(params: ProposalGenerationParams): Promise<{ title: string; content: string }> {
@@ -422,27 +423,35 @@ ${pastGranteesFormatted}`;
       .map((w) => w[0]!.toUpperCase() + w.slice(1))
       .join(" ");
 
-    const prompt = `Write a comprehensive, funder-aligned ${formattedType} for:
+    const totalFunding = fundingAmount || 150000;
+
+    const prompt = `Write a comprehensive, funder-aligned, and deeply detailed ${formattedType} for:
 Organization Name: ${orgName}
 Industry or Sector: ${industry}
 Country of Operation: ${country}
 Target Grant Program or Funder: ${funderName || "Institutional Grant Program"}
-Requested Funding: $${(fundingAmount || 150000).toLocaleString()} USD
+Requested Funding: $${totalFunding.toLocaleString()} USD
 Problem Statement: ${problemStatement || "Addressing critical operational bottlenecks through reliable local solutions."}
 Proposed Solution: ${solutionStatement || "Deploying a community-anchored, practical operational model."}
-Target Beneficiaries: ${params.targetBeneficiaries || "Local communities and businesses"}
+Target Beneficiaries: ${params.targetBeneficiaries || "Local communities, smallholder enterprises, and families"}
 ${customAiPrompt ? `User Grant Writing Methodology:\n${customAiPrompt}` : ""}
 
-STRICT WRITING & FORMATTING RULES:
-1. Write like an experienced human grant professional. Use simple, natural English.
-2. DO NOT use raw Markdown characters: no asterisks (**), no hashes (###), and no em dashes (—).
+STRICT WRITING & STRUCTURAL RULES:
+1. Write like an experienced principal grant writer. Use natural, precise, persuasive English.
+2. DO NOT use raw Markdown characters: no asterisks (**), no hashes (###), and no em dashes (—). Use bullet points (•) and plain text numbers.
 3. DO NOT use forbidden buzzwords: "fragmented", "frontlines", "unlock", "leverage", "game changer", "transformative", "revolutionary", "cutting edge", "seamless", "robust", "holistic", "empower communities", "drive impact".
-4. Include explicit sections with plain text titles:
-   Executive Summary
-   Problem Statement and Context
-   Proposed Solution and Methodology
-   Measurable Beneficiary Impact
-   Post-Grant Transition Plan`;
+4. The proposal MUST be well detailed, structured, and organized across these 10 distinct plain text sections:
+   Section 1: Executive Summary and Alignment with Funder Priorities
+   Section 2: Statement of Need, Root Cause Analysis and Contextual Baseline
+   Section 3: Project Goals, SMART Objectives and Theory of Change
+   Section 4: Implementation Methodology and Phased Milestone Work Packages
+   Section 5: Direct and Indirect Beneficiary Quantification
+   Section 6: Detailed Activity-Based Budget and Financial Cost Justification
+   Section 7: Monitoring, Evaluation, Accountability and Learning Framework
+   Section 8: Operational, Financial and Currency Risk Management Strategy
+   Section 9: Organizational Capacity, Governance Structure and Key Personnel
+   Section 10: Post-Grant Financial Sustainability, Exit Strategy and Commercial Break-Even
+5. Include explicit numerical targets, timeline gates, verified activity costs that sum exactly to $${totalFunding.toLocaleString()} USD, and concrete field implementation mechanics.`;
 
     try {
       const generatedContent = await this.gemini.generateText(prompt, "synthesis", GRANT_WRITER_SYSTEM_PROMPT);
@@ -456,38 +465,84 @@ STRICT WRITING & FORMATTING RULES:
   private fallbackProposalDraft(params: ProposalGenerationParams, formattedType: string): { title: string; content: string } {
     const { orgName, industry, country, problemStatement, solutionStatement, fundingAmount, funderName } = params;
     const title = `${formattedType}: ${orgName} for ${funderName ?? "Institutional Grant Program"}`;
+    const totalAward = fundingAmount ?? 150000;
+    const equipCost = Math.round(totalAward * 0.40);
+    const persCost = Math.round(totalAward * 0.28);
+    const opsCost = Math.round(totalAward * 0.16);
+    const meCost = Math.round(totalAward * 0.10);
+    const adminCost = totalAward - (equipCost + persCost + opsCost + meCost);
 
     const content = `${title}
 Applicant Organization: ${orgName}
 Sector: ${industry}
-Country of Operation: ${country}
-Target Award Amount: $${(fundingAmount ?? 150000).toLocaleString()} USD
+Operating Jurisdiction: ${country}
+Target Award Allocation: $${totalAward.toLocaleString()} USD
 Grant Opportunity: ${funderName ?? "Institutional Funding Program"}
 
-1. Executive Summary
-${orgName} presents this ${formattedType.toLowerCase()} to deliver measurable, sustainable outcomes in ${industry}. Operating across ${country}, our initiative addresses systemic bottlenecks through a practical, community-anchored model. With a target award allocation of $${(fundingAmount ?? 150000).toLocaleString()} USD, this grant will fund equipment deployment, validate direct participant impact, and establish financial self-sufficiency over the 24-month grant lifecycle.
+Section 1: Executive Summary and Alignment with Funder Priorities
+${orgName} respectfully submits this comprehensive ${formattedType.toLowerCase()} to establish verifiable, community-anchored operational solutions in ${industry} across ${country}. Operating with demonstrated field capabilities, our initiative directly resolves systemic supply deficits and service bottlenecks. Over a structured 24-month lifecycle, an investment of $${totalAward.toLocaleString()} USD will fund technical equipment deployment, community training, and field commissioning, delivering direct economic gains to verified participants while establishing complete financial self-sufficiency.
 
-2. Problem Statement and Contextual Need
-${problemStatement || `Across ${country}, target communities face acute operational and resource constraints in the ${industry} domain. Current approaches lack coordination, remain under-resourced, and rely heavily on short-term assistance.`}
-• Baseline Evidence: Over 60% of target constituents in the operating region lack reliable access to modern solutions.
-• Urgency: Prompt intervention prevents prolonged economic exclusion and productivity losses in local communities.
+Section 2: Problem Statement and Contextual Needs Analysis
+Across ${country}, target constituents face documented operational obstacles in the ${industry} domain.
+${problemStatement || `Field assessments indicate that over 58% of target producers and local community members operate without reliable access to essential productive infrastructure, resulting in substantial post-harvest or operational losses.`}
+• Baseline Deficiency: Baseline evaluations reveal that local enterprises lose an estimated 32% of annual operating margins due to inadequate technical tooling and volatile supply chains.
+• Root Causes: The primary systemic drivers include limited rural capital availability, high equipment import tariffs, and an absence of localized maintenance technicians.
+• Urgency: Prompt intervention establishes critical local processing infrastructure before compounding macroeconomic volatility further reduces community productivity.
 
-3. Proposed Solution and Methodology
-${solutionStatement || `Our project applies proven operational workflows, direct stakeholder partnerships, and practical technology to deliver solutions directly to affected communities.`}
-• Phase 1 (Months 1 to 6): Community mobilization, site assessment, regulatory filings, and baseline verification.
-• Phase 2 (Months 7 to 18): System deployment, local stakeholder training, and milestone verification.
-• Phase 3 (Months 19 to 24): Independent impact evaluation and operational transition to earned revenue.
+Section 3: Project Goals, SMART Objectives and Theory of Change
+The primary goal is to deploy localized infrastructure that increases community participant incomes by 35% within 18 months.
+• Objective 1: Commission 12 localized operational processing units across target operating zones within the first 6 months.
+• Objective 2: Deliver hands-on operational training to 850 local enterprise operators and cooperative leaders by Month 12.
+• Objective 3: Achieve full operational break-even and financial transition by Month 20 with zero reliance on philanthropic subsidies.
+• Theory of Change: If local operators are equipped with reliable hardware, standardized workflows, and maintenance capability, then operational downtime decreases by 65%, resulting in sustained income expansion and community resilience.
 
-4. Measurable Beneficiary Impact
-• Direct Beneficiaries: 1,500 verified households and direct participants engaged.
-• Indirect Beneficiaries: 8,000 community members benefiting from improved local services.
-• Sustainable Development Goals: Directly contributes to SDG 8 (Decent Work and Economic Growth) and SDG 9 (Industry, Innovation and Infrastructure).
+Section 4: Proposed Solution, Implementation Methodology and Phased Work Packages
+Execution is organized into 4 milestone-gated quarterly work packages:
+• Work Package 1 (Months 1 to 3): Site surveys, statutory local permitting, stakeholder cooperative MoUs, and equipment procurement.
+• Work Package 2 (Months 4 to 9): Physical delivery, facility installation, technical commissioning, and initial operator certification.
+• Work Package 3 (Months 10 to 18): Full operational run, supply chain integration, participant output tracking, and revenue generation.
+• Work Package 4 (Months 19 to 24): Independent third-party audit, asset ownership transfer to local cooperatives, and dissemination of findings.
 
-5. Post-Grant Transition Plan
-Post-grant sustainability is anchored in local service revenue and municipal partnerships. By Month 24, operational fees and local contracts will support 100% of ongoing operational costs without requiring recurrent philanthropic subsidies.`;
+Section 5: Direct and Indirect Beneficiary Quantification
+• Direct Beneficiaries: 1,450 verified smallholder operators and cooperative members enrolled through biometric and GPS verification.
+• Female and Youth Participation: A minimum of 55% of all direct training slots and management roles are dedicated to women and youth.
+• Indirect Beneficiaries: 7,800 community members benefiting from localized service access and reduced retail prices for staple commodities.
+• Alignment with Global Goals: Directly advances UN Sustainable Development Goal 8 (Decent Work and Economic Growth) and Goal 9 (Industry, Innovation and Infrastructure).
+
+Section 6: Detailed Activity-Based Budget and Financial Cost Justification
+The requested award of $${totalAward.toLocaleString()} USD is allocated across five transparent cost centers:
+• Equipment and Hardware Procurement ($${equipCost.toLocaleString()} USD, 40%): Commercial field units, solar backup inverters, and precision measuring tools.
+• Key Personnel and Field Technical Staff ($${persCost.toLocaleString()} USD, 28%): Project Director, Lead Field Engineer, and 4 community operations officers for 24 months.
+• Direct Field Operations and Transport ($${opsCost.toLocaleString()} USD, 16%): Site preparation, vehicle fuel, regional haulage, and technical maintenance reserves.
+• Monitoring, Evaluation and Audit ($${meCost.toLocaleString()} USD, 10%): Baseline field surveys, mid-term evaluation, and independent statutory financial audit.
+• Administrative and Indirect Overhead ($${adminCost.toLocaleString()} USD, 6%): Compliance filings, project communications, and financial insurance.
+
+Section 7: Monitoring, Evaluation, Accountability and Learning Framework
+Progress is tracked through an objective digital indicator matrix:
+• Baseline Verification: Pre-intervention economic surveys conducted at Month 1 establish verified baseline production volumes.
+• Quarterly Milestones: Technical milestones are evaluated quarterly against predefined output quotas prior to disbursement release.
+• Independent Evaluation: An independent audit firm conducts unannounced field inspections at Months 12 and 24 to verify participant welfare metrics.
+
+Section 8: Operational, Financial and Currency Risk Management Strategy
+• Foreign Exchange Fluctuation: Equipment orders are secured through forward purchase agreements to mitigate local currency depreciation.
+• Supply Chain Delay: Dual vendor sourcing agreements are maintained to prevent procurement bottlenecks.
+• Equipment Downtime: Local technicians undergo certified apprenticeship training, maintaining an on-site inventory of critical replacement parts.
+
+Section 9: Organizational Governance, Team Capacity and Compliance Track Record
+${orgName} operates under structured governance protocols:
+• Executive Leadership: The leadership team possesses over 15 combined years of hands-on project management experience in ${country}.
+• Financial Safeguards: Segregated grant accounting, dual-signatory bank approvals, and cloud-backed transaction logs ensure zero financial leakage.
+• Statutory Compliance: Fully registered corporate entity with up-to-date tax clearance and prior clean audit certifications.
+
+Section 10: Post-Grant Transition Plan, Financial Sustainability and Commercial Break-Even
+Sustainability is embedded directly into the operational model:
+• Earned Revenue Transition: By Month 16, modest service fees charged for equipment usage generate $8,200 USD in monthly recurring operating revenue.
+• Operational Break-Even: Month 20 operating revenues exceed all recurring maintenance and personnel costs, ending all grant subsidy reliance.
+• Community Asset Transfer: At Month 24, equipment ownership covenants transition to local operating cooperatives, ensuring enduring institutional legacy.`;
 
     return { title, content: cleanPlainText(content) };
   }
+
 
   /**
    * Reviews a proposal draft against 11-stage automated review pipeline (Specification Section 20 & 31).
