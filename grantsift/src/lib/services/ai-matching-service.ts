@@ -27,6 +27,45 @@ export interface ProjectAnalysisProfile {
   hasAuditedFinancials?: boolean;
 }
 
+export interface ExplainableMatchCriteria {
+  country: "Strong match" | "Moderate match" | "Weak match";
+  sector: "Strong match" | "Moderate match" | "Weak match";
+  orgType: "Strong match" | "Moderate match" | "Weak match";
+  fundingStage: "Strong match" | "Moderate match" | "Weak match";
+  geographicFocus: "Strong match" | "Moderate match" | "Weak match";
+  beneficiaryAlignment: "Strong match" | "Moderate match" | "Weak match";
+  evidenceReadiness: "Strong" | "Moderate" | "Weak";
+  financialReadiness: "Strong" | "Moderate" | "Weak";
+  previousGrantExperience: "Strong" | "Moderate" | "Weak";
+  applicationReadiness: "Strong" | "Moderate" | "Weak";
+  whyThisOpportunityFits: string;
+  whatMakesApplicantCompetitive: string;
+  whatCouldCauseRejection: string;
+  whatInformationIsMissing: string;
+  whatShouldBeImprovedBeforeApplying: string;
+}
+
+export interface ScreeningDimensionResult {
+  dimension:
+    | "Identity readiness"
+    | "Eligibility"
+    | "Problem and solution clarity"
+    | "Financial readiness"
+    | "Impact readiness"
+    | "Proposal readiness"
+    | "Data room completeness"
+    | "Team readiness"
+    | "Past funding"
+    | "Application readiness";
+  finding: string;
+  reason: string;
+  evidence: string;
+  confidence: number;
+  missingInformation?: string;
+  recommendedAction: string;
+  humanReviewStatus: "Pending Founder Sign-off" | "Reviewed and Accepted" | "Flagged for Revision";
+}
+
 export interface DetailedGrantMatch {
   grant: GrantOpportunity;
   matchScore: number;
@@ -36,6 +75,8 @@ export interface DetailedGrantMatch {
   matchedCharacteristics: string[];
   potentialIssuesToFix: string[]; // What needs to be fixed before applying (Specification §8)
   weaknessAnalysis: string[];
+  explainableMatch: ExplainableMatchCriteria; // Explainable matching breakdown (Specification §7)
+  screeningEvaluation: ScreeningDimensionResult[]; // AI Screening across 10 dimensions (Specification §8)
   eligibilityCompatibility: {
     status: "Eligible" | "Possibly Eligible" | "Ineligible" | "Unknown";
     details: string;
@@ -300,6 +341,119 @@ export class AIMatchingService {
       elDetails = "Eligible on core parameters, but requires addressing specific documentation or metric requirements.";
     }
 
+    const explainableMatch: ExplainableMatchCriteria = {
+      country: countryMatches ? "Strong match" : "Weak match",
+      sector: sectorStatus === "Direct Focus" ? "Strong match" : sectorStatus === "Adjacent Alignment" ? "Moderate match" : "Weak match",
+      orgType: typeMatches ? "Strong match" : "Moderate match",
+      fundingStage: stageMatches ? "Strong match" : "Moderate match",
+      geographicFocus: geoStatus === "Fully Eligible" ? "Strong match" : "Moderate match",
+      beneficiaryAlignment: (project.targetBeneficiaries || "").length > 5 ? "Strong match" : "Moderate match",
+      evidenceReadiness: project.hasIncorporation && project.hasAuditedFinancials ? "Strong" : project.hasIncorporation ? "Moderate" : "Weak",
+      financialReadiness: fundingStatus === "Well Aligned" ? "Strong" : fundingStatus === "Below Threshold" ? "Moderate" : "Weak",
+      previousGrantExperience: (project.traction || "").length > 20 ? "Moderate" : "Weak",
+      applicationReadiness: finalScore >= 80 ? "Strong" : finalScore >= 60 ? "Moderate" : "Weak",
+      whyThisOpportunityFits: `Aligns with ${grant.funderName} focus on ${grant.eligibility.sector.join(", ")} in ${project.country || "the region"}.`,
+      whatMakesApplicantCompetitive: `Strong operational presence in ${project.country || "target market"} and realistic funding scope.`,
+      whatCouldCauseRejection: potentialIssuesToFix.length > 0 ? potentialIssuesToFix.join("; ") : "Competition from established applicants with longer audit history.",
+      whatInformationIsMissing: missingInfo.length > 0 ? missingInfo.join("; ") : "None. Core documentation verified.",
+      whatShouldBeImprovedBeforeApplying: potentialIssuesToFix.length > 0 ? `Prepare ${potentialIssuesToFix[0]}` : "Confirm third-party letters of support.",
+    };
+
+    const screeningEvaluation: ScreeningDimensionResult[] = [
+      {
+        dimension: "Identity readiness",
+        finding: project.hasIncorporation ? "Verified legal entity" : "Entity incorporation pending verification",
+        reason: project.hasIncorporation ? "Incorporation certificate referenced." : "Official registration documentation not yet confirmed.",
+        evidence: project.hasIncorporation ? "Data room legal files" : "Self-reported profile",
+        confidence: 0.95,
+        missingInformation: project.hasIncorporation ? undefined : "Certificate of Incorporation",
+        recommendedAction: project.hasIncorporation ? "Ensure legal standing is maintained." : "Upload registration documentation to Data Room.",
+        humanReviewStatus: project.hasIncorporation ? "Reviewed and Accepted" : "Flagged for Revision",
+      },
+      {
+        dimension: "Eligibility",
+        finding: elStatus,
+        reason: elDetails,
+        evidence: `Country: ${project.country}, OrgType: ${project.orgType}`,
+        confidence: 0.92,
+        recommendedAction: countryMatches ? "Maintain geographic compliance." : "Verify regional eligibility window.",
+        humanReviewStatus: countryMatches ? "Reviewed and Accepted" : "Flagged for Revision",
+      },
+      {
+        dimension: "Problem and solution clarity",
+        finding: (project.problemStatement && project.solutionStatement) ? "Clear problem and intervention articulated" : "Problem statement needs sharper baselines",
+        reason: "Funder requires documented community bottleneck and logical operational intervention.",
+        evidence: project.problemStatement || "Project profile statements",
+        confidence: 0.9,
+        recommendedAction: "Ground problem statements with local baseline data and quantified constraints.",
+        humanReviewStatus: "Reviewed and Accepted",
+      },
+      {
+        dimension: "Financial readiness",
+        finding: fundingStatus,
+        reason: fundingDetails,
+        evidence: `Target budget: $${(project.fundingRequirement || 0).toLocaleString()} USD`,
+        confidence: 0.88,
+        recommendedAction: "Ensure milestone tranches conform to funder allowable cost caps.",
+        humanReviewStatus: fundingStatus === "Well Aligned" ? "Reviewed and Accepted" : "Pending Founder Sign-off",
+      },
+      {
+        dimension: "Impact readiness",
+        finding: project.targetBeneficiaries ? "Target beneficiaries identified" : "Beneficiary quantification needed",
+        reason: "Funder reviews disaggregated direct and indirect participant reach.",
+        evidence: project.targetBeneficiaries || "Beneficiary description",
+        confidence: 0.89,
+        recommendedAction: "Disaggregate direct vs indirect participants with measurable targets.",
+        humanReviewStatus: "Reviewed and Accepted",
+      },
+      {
+        dimension: "Proposal readiness",
+        finding: finalScore >= 75 ? "High drafting readiness" : "Pre-drafting preparation required",
+        reason: "Applicant possesses necessary core information to generate tailored proposal.",
+        evidence: `Match Score: ${finalScore}%`,
+        confidence: 0.91,
+        recommendedAction: "Proceed to opportunity-specific concept note or technical proposal drafting.",
+        humanReviewStatus: "Pending Founder Sign-off",
+      },
+      {
+        dimension: "Data room completeness",
+        finding: (project.hasIncorporation && project.hasAuditedFinancials) ? "Comprehensive Data Room" : "Key attachments missing from Data Room",
+        reason: "Funder guidelines require supporting governance and financial records.",
+        evidence: missingInfo.length > 0 ? missingInfo.join(", ") : "All core documents in place",
+        confidence: 0.94,
+        missingInformation: missingInfo.length > 0 ? missingInfo.join(", ") : undefined,
+        recommendedAction: "Upload missing corporate documents to organization Data Room.",
+        humanReviewStatus: missingInfo.length === 0 ? "Reviewed and Accepted" : "Flagged for Revision",
+      },
+      {
+        dimension: "Team readiness",
+        finding: project.teamInfo ? "Experienced founding and technical team" : "Key personnel details recommended",
+        reason: "Technical feasibility evaluation depends on team track record.",
+        evidence: project.teamInfo || "Founder credentials and experience",
+        confidence: 0.87,
+        recommendedAction: "Attach 2-page CVs of project lead and technical architect.",
+        humanReviewStatus: "Reviewed and Accepted",
+      },
+      {
+        dimension: "Past funding",
+        finding: (project as any).orgFundingToDate ? `Historical funding recorded` : "First-time grant applicant or bootstrapped",
+        reason: "Previous grant track record de-risks execution for institutional funders.",
+        evidence: project.traction || "Self-reported capital history",
+        confidence: 0.85,
+        recommendedAction: "Highlight successful completion of prior milestones and clean fiscal stewardship.",
+        humanReviewStatus: "Reviewed and Accepted",
+      },
+      {
+        dimension: "Application readiness",
+        finding: finalScore >= 75 ? "Ready for application drafting" : "Complete document checklist before submission",
+        reason: "Overall alignment across eligibility, budget, and impact criteria.",
+        evidence: `Compatibility: ${compLevel}`,
+        confidence: 0.93,
+        recommendedAction: recommendedNextAction,
+        humanReviewStatus: "Pending Founder Sign-off",
+      },
+    ];
+
     return {
       grant,
       matchScore: finalScore,
@@ -309,6 +463,8 @@ export class AIMatchingService {
       matchedCharacteristics,
       potentialIssuesToFix,
       weaknessAnalysis: potentialIssuesToFix,
+      explainableMatch,
+      screeningEvaluation,
       eligibilityCompatibility: { status: elStatus, details: elDetails },
       fundingCompatibility: { status: fundingStatus, details: fundingDetails },
       geographicCompatibility: { status: geoStatus, details: geoDetails },

@@ -119,6 +119,19 @@ export class ProposalStudioService {
         : "Some portal application questions remain incomplete.",
     });
 
+    // 8. Formatting & AI Jargon Check
+    const hasRawMarkdown = /[\*#_]{2,}|^[ \t]*#{1,6}/m.test(proposalText);
+    const hasForbiddenWords = /\b(fragmented|frontlines|frontline|leverage|unlock|robust|seamless|game[- ]changer)\b/i.test(proposalText);
+    const cleanFormatting = !hasRawMarkdown && !hasForbiddenWords;
+    checks.push({
+      title: "Human Writing & Clean Formatting",
+      passed: cleanFormatting,
+      score: cleanFormatting ? 100 : 60,
+      feedback: cleanFormatting
+        ? "Text is written in clear, natural human prose without raw Markdown syntax or AI buzzwords."
+        : "Text contains visible Markdown syntax (asterisks/hashes) or stereotypical AI buzzwords.",
+    });
+
     const overallScore = Math.round(
       checks.reduce((acc, curr) => acc + curr.score, 0) / checks.length
     );
@@ -127,7 +140,7 @@ export class ProposalStudioService {
       overallScore,
       checks,
       strengths: [
-        "Executive summary anchors clear African operational jurisdiction.",
+        "Executive summary anchors clear operational jurisdiction.",
         "Phased 24-month workplan with explicit milestone gates.",
         "Transparent local sustainability model avoiding endless philanthropic dependency.",
       ],
@@ -149,22 +162,22 @@ export class ProposalStudioService {
       categoryTotals[item.category] = (categoryTotals[item.category] || 0) + item.totalCost;
     }
 
-    let narrative = `### Financial Proposal & Budget Justification (${currency})\n\n`;
-    narrative += `**Total Requested Budget:** ${currency} ${total.toLocaleString()}\n\n`;
-    narrative += `#### 1. Category Allocations\n`;
+    let narrative = `Financial Proposal and Budget Justification (${currency})\n\n`;
+    narrative += `Total Requested Budget: ${currency} ${total.toLocaleString()}\n\n`;
+    narrative += `1. Category Allocations\n`;
 
     for (const [cat, sum] of Object.entries(categoryTotals)) {
       const pct = total > 0 ? Math.round((sum / total) * 100) : 0;
       const formattedCategory = cat.charAt(0).toUpperCase() + cat.slice(1).replace("_", " ");
-      narrative += `- **${formattedCategory}:** ${currency} ${sum.toLocaleString()} (${pct}%)\n`;
+      narrative += `• ${formattedCategory}: ${currency} ${sum.toLocaleString()} (${pct}%)\n`;
     }
 
-    narrative += `\n#### 2. Itemized Cost Explanations\n`;
+    narrative += `\n2. Itemized Cost Explanations\n`;
     for (const item of items) {
-      narrative += `- **${item.description}** (${item.category}): ${item.quantity} units @ ${currency} ${item.unitCost.toLocaleString()} = **${currency} ${item.totalCost.toLocaleString()}**. Direct operational requirement for project delivery.\n`;
+      narrative += `• ${item.description} (${item.category}): ${item.quantity} units @ ${currency} ${item.unitCost.toLocaleString()} = ${currency} ${item.totalCost.toLocaleString()}. Direct operational requirement for project delivery.\n`;
     }
 
-    narrative += `\n#### 3. Financial Controls & Procurement\nAll equipment and software procurement follows competitive 3-quote vendor selection. Administrative overhead is capped within the funder's allowable cost Ceiling.`;
+    narrative += `\n3. Financial Controls and Procurement\nAll equipment and software procurement follows competitive vendor selection. Administrative overhead is capped within the funder's allowable cost ceiling.`;
 
     return narrative;
   }

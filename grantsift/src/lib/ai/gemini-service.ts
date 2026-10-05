@@ -4,6 +4,8 @@ import type { z } from "zod";
 import { AppError } from "@/lib/errors/app-error";
 import { requireEnv } from "@/lib/config";
 
+import { cleanPlainText } from "@/lib/ai/ai-text-sanitizer";
+
 type ModelTier = "fast" | "synthesis";
 
 const MODEL_BY_TIER: Record<ModelTier, string> = {
@@ -23,14 +25,21 @@ export class GeminiService {
     return new GoogleGenerativeAI(key);
   }
 
-  async generateText(prompt: string, tier: ModelTier = "fast"): Promise<string> {
+  async generateText(
+    prompt: string,
+    tier: ModelTier = "fast",
+    systemInstruction?: string
+  ): Promise<string> {
     const client = this.client();
     if (client) {
       const modelName = MODEL_BY_TIER[tier];
       try {
-        const model = client.getGenerativeModel({ model: modelName });
+        const model = client.getGenerativeModel({
+          model: modelName,
+          ...(systemInstruction ? { systemInstruction } : {}),
+        });
         const result = await withTimeout(model.generateContent(prompt), 20_000);
-        return result.response.text();
+        return cleanPlainText(result.response.text());
       } catch (err) {
         console.warn("Gemini generateText error, falling back:", err);
       }

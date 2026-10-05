@@ -7,6 +7,8 @@ import { ReadinessRepository } from "@/lib/repositories/readiness-repository";
 import { SopRepository } from "@/lib/repositories/sop-repository";
 import { AppError } from "@/lib/errors/app-error";
 
+import { cleanPlainText } from "@/lib/ai/ai-text-sanitizer";
+
 const sopPlanSchema = z.object({
   tasks: z.array(
     z.object({
@@ -21,13 +23,14 @@ const sopPlanSchema = z.object({
   ),
 });
 
-const SYSTEM_PROMPT = `You turn a list of grant-readiness gaps into a practical task list. Every task
-must address exactly one gap from the list you're given — do not invent gaps, merge gaps, or add
-tasks unrelated to the list. For each gap write: a short task name (an action, e.g. "Draft letters
-of support from two partner organizations"), a suggested owner role (e.g. "Founder", "Finance lead",
-"Program manager" — a role, not a person's name, unless the profile names someone), what's needed as
-input, what the completed output looks like, the specific document this produces if any, and a short
-practical note if useful. Keep everything concrete and specific to the gap text given.`;
+const SYSTEM_PROMPT = `You are GrantSift's Senior Grant Operations Specialist.
+Generate an opportunity-specific Standard Operating Procedure (SOP) workflow.
+For each readiness gap and grant requirement:
+1. Formulate a concrete, action-oriented task (e.g. "Assemble audited financial statements for prior two fiscal years").
+2. Assign a practical owner role (such as "Lead Proposal Writer", "Finance Director", "Technical Architect", or "Executive Director").
+3. Define exact input required, completed deliverable output, required document attachment, and practical operational notes.
+4. Strictly follow the sequence: Research, Evidence Gathering, Proposal Drafting, Financial Reconciliation, Technical Review, Founder Sign-Off, Submission, and Post-Submission Tracking.
+5. DO NOT use asterisks (**), hashes (###), or em dashes (—). Keep language clean, professional, and direct.`;
 
 export class SopService {
   private readonly readiness: ReadinessRepository;
@@ -73,15 +76,15 @@ export class SopService {
       const gap = gaps[t.gapIndex] ?? gaps[0]!;
       return {
         project_id: projectId,
-        task: t.task,
-        owner: t.owner,
-        input: t.input,
-        output: t.output,
+        task: cleanPlainText(t.task),
+        owner: cleanPlainText(t.owner),
+        input: cleanPlainText(t.input),
+        output: cleanPlainText(t.output),
         deadline: deadlines[index] ?? null,
         status: "not_started" as const,
-        required_document: t.requiredDocument ?? null,
+        required_document: t.requiredDocument ? cleanPlainText(t.requiredDocument) : null,
         traced_to_source_id: gap.traced_to_source_id,
-        notes: t.notes ?? null,
+        notes: t.notes ? cleanPlainText(t.notes) : null,
         sort_order: index,
       };
     });

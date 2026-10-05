@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ProposalStudioService, type BudgetItem, type ApplicationQuestionItem, type ReadinessEvaluation } from "@/lib/services/proposal-studio-service";
 
+import { cleanPlainText } from "@/lib/ai/ai-text-sanitizer";
+
 const PROPOSAL_TYPES = [
   { id: "concept_note", label: "Concept Note (2-3 Pages)" },
   { id: "technical_proposal", label: "Technical Proposal" },
@@ -35,30 +37,30 @@ export function ProposalStudio({
 
   // Narrative text
   const [title, setTitle] = useState(`Concept Note: ${orgName} for ${funderName}`);
-  const [narrativeContent, setNarrativeContent] = useState(`## Concept Note: ${orgName}
-**Applicant Organization:** ${orgName}  
-**Jurisdiction:** ${country}  
-**Target Program:** ${funderName}  
-**Award Request:** $150,000 USD  
+  const [narrativeContent, setNarrativeContent] = useState(`Concept Note for ${orgName}
+Applicant Organization: ${orgName}
+Jurisdiction: ${country}
+Target Program: ${funderName}
+Award Request: $150,000 USD
 
-### 1. Executive Summary
-${orgName} deploys an advanced multilingual artificial intelligence verification system across ${country} to counter civic misinformation, preserve democratic trust, and protect frontline communities. With a requested award of $150,000 USD, this 24-month project will expand local language analysis into Yoruba, Hausa, Igbo, and Nigerian Pidgin, validating direct impact with over 150,000 citizens.
+1. Executive Summary
+${orgName} deploys a multilingual information verification system across ${country} to counter civic misinformation, preserve public trust, and protect local communities. With a requested award of $150,000 USD, this 24-month project will expand local language analysis into Yoruba, Hausa, Igbo, and Nigerian Pidgin, validating direct impact with over 150,000 citizens.
 
-### 2. Contextual Problem Analysis
-Misinformation across mobile communication channels in ${country} poses direct threats to public health stability, financial integrity, and election peace. Over 70% of citizens report encountering synthetic audio and distorted video claims without access to verified fact-checking tools in their native dialects.
+2. Contextual Problem Analysis
+Misinformation across mobile communication channels in ${country} poses direct threats to public health stability, financial integrity, and community peace. Over 70% of citizens report encountering synthetic audio and distorted video claims without access to verified fact-checking tools in their native dialects.
 
-### 3. Phased Implementation Roadmap
-- **Phase 1 (Months 1–6):** Dataset localization and fine-tuning for regional dialect nuance.
-- **Phase 2 (Months 7–18):** Direct deployment with 20 community media partners and civic NGOs.
-- **Phase 3 (Months 19–24):** Independent impact audit and transition to earned revenue through B2B API verification licenses.
+3. Phased Implementation Roadmap
+• Phase 1 (Months 1 to 6): Dataset localization and fine-tuning for regional dialect nuance.
+• Phase 2 (Months 7 to 18): Direct deployment with 20 community media partners and civic organizations.
+• Phase 3 (Months 19 to 24): Independent impact audit and transition to earned revenue through software verification licenses.
 
-### 4. Measurable Beneficiary Impact
-- **Direct Beneficiaries:** 25,000 verified frontline community leaders and mobile fact-checkers trained.
-- **Indirect Beneficiaries:** 1,200,000 citizens receiving validated claim warnings.
-- **Gender Disaggregation:** 54% female civic volunteer ratio maintained across regional hubs.
+4. Measurable Beneficiary Impact
+• Direct Beneficiaries: 25,000 verified community leaders and mobile fact-checkers trained.
+• Indirect Beneficiaries: 1,200,000 citizens receiving validated claim warnings.
+• Gender Disaggregation: 54% female civic volunteer ratio maintained across regional hubs.
 
-### 5. Sustainability Plan
-By Month 24, enterprise API subscription fees from media houses and financial institutions will cover 100% of server infrastructure and ongoing team operations.`);
+5. Sustainability Plan
+By Month 24, enterprise subscription fees from media houses and financial institutions will cover 100% of server infrastructure and ongoing team operations.`);
 
   // Application Questions Form Builder
   const [questions, setQuestions] = useState<ApplicationQuestionItem[]>([
@@ -67,7 +69,7 @@ By Month 24, enterprise API subscription fees from media houses and financial in
       question: "Describe the specific community challenge and why current solutions are inadequate.",
       wordLimit: 250,
       isRequired: true,
-      response: "Frontline African communities lack real-time verification tools in their native dialects. Existing fact-checking efforts remain centralized and English-only, allowing viral misinformation on WhatsApp to incite panic before refutations can be published.",
+      response: "Local communities lack real-time verification tools in their native dialects. Existing fact-checking efforts remain centralized and English-only, allowing viral misinformation on mobile channels to incite panic before refutations can be published.",
       status: "ready",
     },
     {
@@ -119,14 +121,14 @@ By Month 24, enterprise API subscription fees from media houses and financial in
             funderName,
             fundingAmount: budgetTotal,
             problemStatement: questions[0]?.response,
-            solutionStatement: "Deploying high-impact multilingual AI claim verification directly to African mobile users.",
+            solutionStatement: "Deploying reliable multilingual claim verification directly to mobile users.",
           },
         }),
       });
 
       const data = await res.json();
       if (data.success && data.data?.content) {
-        setNarrativeContent(data.data.content);
+        setNarrativeContent(cleanPlainText(data.data.content));
         setTitle(data.data.title || title);
         setLastSaved(`Generated & saved at ${new Date().toLocaleTimeString()}`);
       }

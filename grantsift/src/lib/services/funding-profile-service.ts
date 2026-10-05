@@ -55,7 +55,7 @@ Analyze the following organization profile and build a structured funding profil
 - Mission: ${input.mission || "N/A"}
 - Problem Statement: ${input.problemStatement || "N/A"}
 - Solution Statement: ${input.solutionStatement || "N/A"}
-- Target Beneficiaries: ${input.targetBeneficiaries || "Frontline communities"}
+- Target Beneficiaries: ${input.targetBeneficiaries || "Local communities and direct beneficiaries"}
 - Detailed Description: ${input.detailedDescription || "N/A"}
 - Target Funding Seeking: $${(input.fundingCurrentlySeeking || 100000).toLocaleString()} USD
 

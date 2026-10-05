@@ -99,12 +99,12 @@ export function OnboardingWizard() {
   const [fundingSeeking, setFundingSeeking] = useState("150000");
   const [typicalProjectSize, setTypicalProjectSize] = useState("50000");
   const [beneficiaries, setBeneficiaries] = useState("Citizens, journalists, civic organizations, and mobile users");
-  const [mission, setMission] = useState("Empowering African communities with AI-driven information verification to combat misinformation and promote digital trust.");
+  const [mission, setMission] = useState("Equipping African communities with reliable information verification to counter misinformation and protect public trust.");
   const [problemAddressed, setProblemAddressed] = useState("Pervasive misinformation across WhatsApp and social platforms fueling civic distrust and public health panic.");
 
   // Step 3: Tell us more about what you do (Natural Language)
   const [narrative, setNarrative] = useState(
-    "Rumour Shield is a multilingual AI-powered claim verification platform helping African users verify claims, links, screenshots, audio, and video before sharing. We operate in Nigeria with expansion plans across West Africa. Our platform supports local languages (Yoruba, Hausa, Igbo, Pidgin) to combat digital misinformation in frontline communities."
+    "Rumour Shield is a multilingual claim verification platform helping African users verify claims, links, screenshots, audio, and video before sharing. We operate in Nigeria with expansion plans across West Africa. Our platform supports local languages (Yoruba, Hausa, Igbo, Pidgin) to combat digital misinformation in local communities."
   );
 
   // Step 4: Synthesized AI Funding Profile

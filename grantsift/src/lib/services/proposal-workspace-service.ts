@@ -325,7 +325,7 @@ export class ProposalWorkspaceService {
             id: "gp-executive-summary",
             title: "Executive Summary",
             description: "A concise overview of the problem, proposed solution, target beneficiaries, and expected outcomes.",
-            content: `${orgName} respectfully applies for funding from ${funderName} under the ${grantName} program. Based in ${country}, our project delivers measurable improvements for frontline communities through practical field deployment.`,
+            content: `${orgName} respectfully applies for funding from ${funderName} under the ${grantName} program. Based in ${country}, our project delivers measurable improvements for local communities and target beneficiaries through practical field deployment.`,
             isRequired: true,
           },
           {
