@@ -71,11 +71,18 @@ export class ProcessingPipelineService {
   private async runFunderStage(projectId: string, funderUrl: string | null): Promise<string | null> {
     const job = await this.jobs.start(projectId, "source");
     try {
-      if (!funderUrl) throw new AppError("VALIDATION_ERROR", "No funder URL set on this project.");
+      if (!funderUrl) {
+        // Discovery-driven project: no manual funder URL provided
+        await this.jobs.finish(job.id, "completed");
+        return null;
+      }
 
       const allSources = await this.sources.listForProject(projectId);
       const funderSource = allSources.find((s) => s.kind === "funder_org");
-      if (!funderSource) throw new AppError("VALIDATION_ERROR", "This project has no funder source.");
+      if (!funderSource) {
+        await this.jobs.finish(job.id, "completed");
+        return null;
+      }
 
       const profile = await this.funderService.fetchFunderProfile(funderUrl);
       await this.sources.update(funderSource.id, {
@@ -99,7 +106,10 @@ export class ProcessingPipelineService {
   private async runVideoDiscoveryStage(projectId: string, funderName: string): Promise<void> {
     const job = await this.jobs.start(projectId, "video");
     try {
-      if (!funderName.trim()) throw new AppError("VALIDATION_ERROR", "No funder name to search for.");
+      if (!funderName.trim() || funderName === "Auto-Discovered Grants") {
+        await this.jobs.finish(job.id, "completed");
+        return;
+      }
 
       const found = await this.youtube.findGrantWinnerVideos(funderName, { maxResults: 10 });
       const candidates = found.slice(0, MAX_VIDEOS_PER_RUN);

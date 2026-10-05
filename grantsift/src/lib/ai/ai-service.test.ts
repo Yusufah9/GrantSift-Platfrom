@@ -66,7 +66,8 @@ describe("AIService", () => {
       isProUser: false,
     });
 
-    expect(chatReply).toContain("Subscribe as a Pro user");
-    expect(chatReply).toContain("40,000+ grants");
+    const replyText = chatReply.message || String(chatReply);
+    expect(replyText).toContain("Subscribe as a Pro user");
+    expect(replyText).toContain("40,000+ grants");
   });
 });

@@ -22,6 +22,29 @@ export const organizationProfileSchema = z.object({
     z.coerce.number().int().gte(1900, "Enter a realistic year").lte(currentYear, "Year founded cannot be in the future"),
   ),
   orgFundingToDate: optionalNumber(z.coerce.number().nonnegative("Funding amount cannot be negative")),
+
+  // Comprehensive Organization Intake Fields (Specification §1)
+  orgType: optionalString(z.string().trim()), // Startup, Business, SME, NGO, Nonprofit, University, Research institution, Social enterprise, Individual/project
+  countriesServed: optionalString(z.string().trim()),
+  sector: optionalString(z.string().trim()),
+  problemStatement: optionalString(z.string().trim().max(10000)),
+  solutionStatement: optionalString(z.string().trim().max(10000)),
+  targetBeneficiaries: optionalString(z.string().trim().max(5000)),
+  stage: optionalString(z.string().trim()), // Idea, Prototype, Pre-Seed, Seed, Early Stage, Growth, Scale-Up
+  revenue: optionalNumber(z.coerce.number().nonnegative()),
+  fundingReceived: optionalNumber(z.coerce.number().nonnegative()),
+  fundingRequired: optionalNumber(z.coerce.number().nonnegative()),
+  geographicFocus: optionalString(z.string().trim().max(200)),
+  projectDescription: optionalString(z.string().trim().max(10000)),
+  impactAreas: optionalString(z.string().trim()),
+  sdgs: optionalString(z.string().trim()),
+  teamInfo: optionalString(z.string().trim().max(5000)),
+  previousGrants: optionalString(z.string().trim().max(5000)),
+  registrationStatus: optionalString(z.string().trim().max(200)),
+  otherEligibility: optionalString(z.string().trim().max(5000)),
+  hasBusinessPlan: z.preprocess((v) => v === true || v === "true" || v === "on", z.boolean().optional()),
+  hasPitchDeck: z.preprocess((v) => v === true || v === "true" || v === "on", z.boolean().optional()),
+  hasFinancialModel: z.preprocess((v) => v === true || v === "true" || v === "on", z.boolean().optional()),
 });
 
 export const grantTargetSchema = z.object({
@@ -42,6 +65,26 @@ export const grantTargetSchema = z.object({
   pastedRequirements: z.string().trim().max(20000).optional(),
 });
 
+export const optionalGrantTargetSchema = z.object({
+  grantFunderUrl: z
+    .string()
+    .trim()
+    .url("Enter the funder's official URL")
+    .refine((url) => {
+      try {
+        const parsed = new URL(url);
+        return parsed.protocol === "https:" || parsed.protocol === "http:";
+      } catch {
+        return false;
+      }
+    }, "Only http(s) URLs are supported")
+    .optional()
+    .or(z.literal("")),
+  grantAmountSought: optionalNumber(z.coerce.number().nonnegative()),
+  grantDeadline: optionalString(z.string().date("Enter a valid date")),
+  pastedRequirements: z.string().trim().max(20000).optional(),
+});
+
 export const youtubeUrlSchema = z
   .string()
   .trim()
@@ -57,4 +100,5 @@ export const youtubeUrlSchema = z
 
 export type OrganizationProfileInput = z.infer<typeof organizationProfileSchema>;
 export type GrantTargetInput = z.infer<typeof grantTargetSchema>;
+export type OptionalGrantTargetInput = z.infer<typeof optionalGrantTargetSchema>;
 

@@ -1,14 +1,21 @@
 export type FeatureKey =
+  | "basic_grant_search"
+  | "view_source_urls"
+  | "basic_match_score"
+  | "full_grant_database"
+  | "direct_application_urls"
+  | "continuous_monitoring"
+  | "advanced_gap_analysis"
+  | "grant_intelligence"
+  | "previous_winner_intelligence"
   | "web_research"
   | "deep_research"
   | "ai_proposal_generation"
-  | "full_grant_database"
   | "funder_intelligence"
   | "proposal_export"
   | "budget_builder"
   | "unlimited_documents"
   | "award_management"
-  | "direct_application_urls"
   | "ai_matching"
   | "sop_workflow";
 
@@ -25,13 +32,14 @@ export interface UserContext {
 export class EntitlementService {
   /**
    * Evaluates server-side whether a user has access to a specific feature.
-   * Admin accounts automatically receive PLATFORM_PRO / ADMIN_PRO status
-   * with complete unrestricted access to all features and zero billing barriers.
+   * Free users see real grants, links, and basic score (Specification §14).
+   * Paid users receive continuous monitoring, deep grant intelligence, winner research,
+   * and automated proposal generation.
    */
   static can(user: UserContext | null | undefined, feature: FeatureKey): boolean {
     if (!user) {
-      // Unauthenticated users have no access to protected features
-      return false;
+      // Public / unauthenticated visitors can still search basic grant databases
+      return feature === "basic_grant_search" || feature === "view_source_urls";
     }
 
     const isAdmin =
@@ -50,12 +58,21 @@ export class EntitlementService {
       return true;
     }
 
-    // Free tier feature permissions
+    // Free tier feature permissions (Specification §14)
+    // The existence of the grant is NEVER hidden from free users
     switch (feature) {
+      case "basic_grant_search":
       case "full_grant_database":
+      case "view_source_urls":
+      case "direct_application_urls":
+      case "basic_match_score":
       case "budget_builder":
       case "sop_workflow":
         return true;
+      case "continuous_monitoring":
+      case "advanced_gap_analysis":
+      case "grant_intelligence":
+      case "previous_winner_intelligence":
       case "web_research":
       case "deep_research":
       case "ai_proposal_generation":
@@ -63,7 +80,6 @@ export class EntitlementService {
       case "proposal_export":
       case "unlimited_documents":
       case "award_management":
-      case "direct_application_urls":
       case "ai_matching":
       default:
         return false;

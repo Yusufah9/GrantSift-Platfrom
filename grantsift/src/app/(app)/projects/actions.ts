@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { organizationProfileSchema, grantTargetSchema } from "@/lib/validation/project";
+import { organizationProfileSchema, optionalGrantTargetSchema } from "@/lib/validation/project";
 import { ProjectService } from "@/lib/services/project-service";
 import { AppError, fail, type ApiResponse } from "@/lib/errors/app-error";
 
@@ -22,9 +22,9 @@ export async function createProjectAction(formData: FormData): Promise<ApiRespon
     return fail(new AppError("VALIDATION_ERROR", org.error.issues[0]?.message ?? "Check the organization fields."));
   }
 
-  const grant = grantTargetSchema.safeParse(raw);
+  const grant = optionalGrantTargetSchema.safeParse(raw);
   if (!grant.success) {
-    return fail(new AppError("VALIDATION_ERROR", grant.error.issues[0]?.message ?? "Check the grant funder fields."));
+    return fail(new AppError("VALIDATION_ERROR", grant.error.issues[0]?.message ?? "Check the grant fields."));
   }
 
   let project;

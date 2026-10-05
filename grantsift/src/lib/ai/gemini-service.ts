@@ -23,6 +23,21 @@ export class GeminiService {
     return new GoogleGenerativeAI(key);
   }
 
+  async generateText(prompt: string, tier: ModelTier = "fast"): Promise<string> {
+    const client = this.client();
+    if (client) {
+      const modelName = MODEL_BY_TIER[tier];
+      try {
+        const model = client.getGenerativeModel({ model: modelName });
+        const result = await withTimeout(model.generateContent(prompt), 20_000);
+        return result.response.text();
+      } catch (err) {
+        console.warn("Gemini generateText error, falling back:", err);
+      }
+    }
+    throw new Error("Gemini API key not configured or unreachable");
+  }
+
   async generateStructured<T>(params: {
     tier: ModelTier;
     systemPrompt: string;

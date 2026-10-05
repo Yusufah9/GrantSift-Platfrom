@@ -2,21 +2,44 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+interface ChatActionChip {
+  id: string;
+  label: string;
+  action: string;
+  payload: Record<string, any>;
+}
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  actions?: ChatActionChip[];
   hasProPrompt?: boolean;
 }
 
-export function AIAssistantWidget({ orgName }: { orgName?: string }) {
+export function AIAssistantWidget({
+  orgName,
+  country,
+  sector,
+}: {
+  orgName?: string;
+  country?: string;
+  sector?: string;
+}) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: `Hello! I am your Grant OS Intelligence Assistant. How can I help ${
+      content: `Hello! I am your Grant OS Intelligence Assistant for **${
         orgName || "your organization"
-      } today? Ask about grant matchmaking, eligibility analysis, proposal drafting, or budget structuring.`,
+      }** in **${country || "Nigeria"}**.\n\nAsk about verified grant discovery, strategic funder intelligence, proposal drafting, or multi-currency budget rules.`,
+      actions: [
+        { id: "init-1", label: "🔍 Find Matches", action: "search_grants", payload: { query: sector || "Technology" } },
+        { id: "init-2", label: "🏛️ AfDB Intelligence", action: "research_funder", payload: { funderName: "African Development Bank (AfDB)" } },
+        { id: "init-3", label: "💡 What is Theory of Change?", action: "ask_concept", payload: { query: "What is a theory of change?" } },
+      ],
     },
   ]);
   const [input, setInput] = useState("");
@@ -46,16 +69,31 @@ export function AIAssistantWidget({ orgName }: { orgName?: string }) {
           action: "chat",
           payload: {
             messages: newMessages,
-            orgContext: { orgName: orgName || "My Organization" },
+            orgContext: {
+              orgName: orgName || "My Organization",
+              country: country || "Nigeria",
+              sector: sector || "Technology",
+            },
           },
         }),
       });
 
       const data = await res.json();
       if (data.success && data.data?.response) {
-        const respText = data.data.response;
+        const resp = data.data.response;
+        const respText = typeof resp === "string" ? resp : resp.message || "Grant intelligence retrieved.";
+        const actions = Array.isArray(resp.actions) ? resp.actions : undefined;
         const hasProPrompt = respText.includes("Subscribe as a Pro user") || respText.includes("Pro subscriber");
-        setMessages([...newMessages, { role: "assistant", content: respText, hasProPrompt }]);
+
+        setMessages([
+          ...newMessages,
+          {
+            role: "assistant",
+            content: respText,
+            actions,
+            hasProPrompt,
+          },
+        ]);
       } else {
         setMessages([
           ...newMessages,
@@ -78,6 +116,36 @@ export function AIAssistantWidget({ orgName }: { orgName?: string }) {
     }
   };
 
+  const handleActionClick = (action: ChatActionChip) => {
+    if (action.action === "search_grants") {
+      const q = action.payload?.query || "";
+      router.push(`/database?q=${encodeURIComponent(q)}`);
+      setIsOpen(false);
+      return;
+    }
+    if (action.action === "start_proposal") {
+      const type = action.payload?.type || "concept_note";
+      router.push(`/proposals?type=${type}`);
+      setIsOpen(false);
+      return;
+    }
+    if (action.action === "research_funder") {
+      const funder = action.payload?.funderName || "African Development Bank";
+      handleSend(`Research this funder: ${funder}`);
+      return;
+    }
+    if (action.action === "ask_concept") {
+      handleSend(action.payload?.query || "What is a theory of change?");
+      return;
+    }
+    if (action.action === "add_tracker" || action.action === "save_grant") {
+      handleSend(`Add ${action.payload?.title || "this grant"} to my tracker pipeline.`);
+      return;
+    }
+    // Default fallback
+    handleSend(`Please proceed with ${action.label}`);
+  };
+
   return (
     <>
       {/* Floating Toggle Button */}
@@ -92,7 +160,7 @@ export function AIAssistantWidget({ orgName }: { orgName?: string }) {
 
       {/* Floating Drawer / Panel */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 flex h-[540px] w-[380px] sm:w-[440px] flex-col overflow-hidden rounded-2xl border border-paper-line bg-paper-raised shadow-2xl backdrop-blur-xl">
+        <div className="fixed bottom-24 right-6 z-50 flex h-[580px] w-[390px] sm:w-[480px] flex-col overflow-hidden rounded-2xl border border-paper-line bg-paper-raised shadow-2xl backdrop-blur-xl">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-paper-line bg-paper px-4 py-3">
             <div className="flex items-center gap-2">
@@ -101,7 +169,9 @@ export function AIAssistantWidget({ orgName }: { orgName?: string }) {
               </span>
               <div>
                 <h3 className="font-serif text-sm font-semibold text-ink">Grant OS Assistant</h3>
-                <p className="text-[11px] text-ink-faint">AI intelligence layer &bull; Active</p>
+                <p className="text-[11px] text-ink-faint">
+                  Active &bull; {orgName || "Organization Workspace"}
+                </p>
               </div>
             </div>
             <button
@@ -116,56 +186,73 @@ export function AIAssistantWidget({ orgName }: { orgName?: string }) {
             </button>
           </div>
 
-          {/* Quick Prompts */}
+          {/* Quick Prompts Bar */}
           <div className="flex items-center gap-1.5 overflow-x-auto border-b border-paper-line/60 bg-paper/50 px-3 py-2 text-[11px] no-scrollbar">
             <button
               type="button"
-              onClick={() => handleSend("Match grants for my startup and business profile")}
+              onClick={() => handleSend("Find grants for Rumour Shield")}
               className="whitespace-nowrap rounded-full border border-paper-line bg-amber-50 text-amber-900 font-medium px-2.5 py-1 hover:bg-amber-100"
             >
-              ✨ Match Grants
+              ✨ Find Grants
             </button>
             <button
               type="button"
-              onClick={() => handleSend("What are the key eligibility requirements for our profile?")}
+              onClick={() => handleSend("Research funder African Development Bank")}
               className="whitespace-nowrap rounded-full border border-paper-line bg-paper-raised px-2.5 py-1 text-ink-soft hover:bg-paper hover:text-ink"
             >
-              Eligibility Check
+              🏛️ Research Funder
             </button>
             <button
               type="button"
-              onClick={() => handleSend("How can we improve our Grant Readiness Scorecard?")}
+              onClick={() => handleSend("What is a theory of change?")}
               className="whitespace-nowrap rounded-full border border-paper-line bg-paper-raised px-2.5 py-1 text-ink-soft hover:bg-paper hover:text-ink"
             >
-              Readiness Gaps
+              💡 Theory of Change
             </button>
             <button
               type="button"
-              onClick={() => handleSend("What are standard allowable budget categories for grants?")}
+              onClick={() => handleSend("Only non-dilutive funding above $50,000")}
               className="whitespace-nowrap rounded-full border border-paper-line bg-paper-raised px-2.5 py-1 text-ink-soft hover:bg-paper hover:text-ink"
             >
-              Budget Rules
+              🎯 Refine Matches
             </button>
           </div>
 
           {/* Messages Body */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
             {messages.map((m, idx) => (
               <div
                 key={idx}
                 className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
               >
                 <div
-                  className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${
+                  className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${
                     m.role === "user"
                       ? "bg-ink text-paper"
                       : "border border-paper-line bg-paper text-ink shadow-sm"
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{m.content}</p>
+
+                  {/* Interactive Action Chips (PRD §72) */}
+                  {m.actions && m.actions.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5 pt-2 border-t border-paper-line/60">
+                      {m.actions.map((act) => (
+                        <button
+                          key={act.id}
+                          type="button"
+                          onClick={() => handleActionClick(act)}
+                          className="rounded-lg border border-amber-300 bg-amber-50/90 px-2.5 py-1 text-[11px] font-semibold text-amber-950 hover:bg-amber-100 transition-colors shadow-xs"
+                        >
+                          {act.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
                 {m.hasProPrompt && (
-                  <div className="mt-1.5 max-w-[88%] rounded-xl border border-amber-300 bg-amber-50 p-2.5 text-[11px] text-amber-950 flex items-center justify-between gap-2 shadow-sm">
+                  <div className="mt-1.5 max-w-[90%] rounded-xl border border-amber-300 bg-amber-50 p-2.5 text-[11px] text-amber-950 flex items-center justify-between gap-2 shadow-sm">
                     <span>Unlock all 40,000+ grants & direct submission links</span>
                     <Link
                       href="/pricing"
@@ -179,8 +266,9 @@ export function AIAssistantWidget({ orgName }: { orgName?: string }) {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="rounded-2xl border border-paper-line bg-paper px-3.5 py-2 text-xs text-ink-faint">
-                  Analyzing grant intelligence…
+                <div className="rounded-2xl border border-paper-line bg-paper px-3.5 py-2 text-xs text-ink-faint flex items-center gap-2">
+                  <span className="animate-spin text-sm">⏳</span>
+                  <span>Grant OS analyzing funder intelligence…</span>
                 </div>
               </div>
             )}
@@ -200,13 +288,13 @@ export function AIAssistantWidget({ orgName }: { orgName?: string }) {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about grants, proposals, budgets…"
+                placeholder="Ask about grants, funders, proposals, budgets…"
                 className="flex-1 rounded-xl border border-paper-line bg-paper-raised px-3 py-2 text-xs text-ink outline-none focus:border-ink"
               />
               <button
                 type="submit"
                 disabled={isLoading || !input.trim()}
-                className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-paper disabled:opacity-40"
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink text-paper disabled:opacity-40 hover:bg-stamp-dark transition-colors"
               >
                 &uarr;
               </button>

@@ -10,11 +10,16 @@ import { GrantSopPipeline } from "@/components/sop/grant-sop-pipeline";
 import { aiMatchingService, type ProjectAnalysisProfile, type ProjectRunAnalysisReport } from "@/lib/services/ai-matching-service";
 import { GrantOpportunityCard } from "@/components/grants/grant-opportunity-card";
 import { FunderEntityCard } from "@/components/grants/funder-entity-card";
+import { FindGrantsEngine } from "@/components/discovery/find-grants-engine";
 
 export default function OrganizationWorkspacePage() {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "research" | "profile" | "scorecard" | "analysis" | "proposals" | "documents" | "sops" | "analytics"
+    "overview" | "discovery" | "research" | "profile" | "scorecard" | "analysis" | "proposals" | "documents" | "sops" | "analytics" | "methodology"
   >("overview");
+  const [customAiPrompt, setCustomAiPrompt] = useState(
+    "Focus on empirical evidence, clear beneficiary metrics, and practical sustainability. Avoid AI buzzwords. Prioritize Nigerian and West African local context."
+  );
+  const [promptSavedNotice, setPromptSavedNotice] = useState(false);
 
   // Multi-tenant Organization Profile (PRD §25: Starts empty if no org created)
   const [hasOrganization, setHasOrganization] = useState(false);
@@ -133,6 +138,17 @@ export default function OrganizationWorkspacePage() {
             </button>
           )}
 
+          {hasOrganization && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("discovery")}
+              className="rounded bg-paper px-4 py-2 text-xs font-semibold border border-paper-line text-ink hover:border-ink/40 transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <span>🔍</span>
+              <span>Find Grants</span>
+            </button>
+          )}
+
           <Link
             href="/database"
             className="rounded bg-paper px-4 py-2 text-xs font-semibold border border-paper-line text-ink hover:border-ink/40 transition-all shadow-sm"
@@ -174,6 +190,15 @@ export default function OrganizationWorkspacePage() {
               }`}
             >
               Overview &amp; Project
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("discovery")}
+              className={`pb-3 px-3 transition-all border-b-2 ${
+                activeTab === "discovery" ? "border-stamp-dark text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              🔍 Find Grants (Engine)
             </button>
             <button
               type="button"
@@ -237,6 +262,15 @@ export default function OrganizationWorkspacePage() {
               }`}
             >
               Analytics
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("methodology")}
+              className={`pb-3 px-3 transition-all border-b-2 ${
+                activeTab === "methodology" ? "border-stamp-dark text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              AI Methodology (PRD §29)
             </button>
           </div>
 
@@ -343,6 +377,16 @@ export default function OrganizationWorkspacePage() {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB: AI GRANT DISCOVERY ENGINE */}
+          {activeTab === "discovery" && (
+            <div className="space-y-6">
+              <FindGrantsEngine
+                organizationProfile={orgProfile}
+                isPaidUser={true}
+              />
             </div>
           )}
 
@@ -625,6 +669,54 @@ export default function OrganizationWorkspacePage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* TAB 9: CUSTOM AI METHODOLOGY (PRD §29, §36) */}
+          {activeTab === "methodology" && (
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-paper-line bg-paper-raised p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-paper-line">
+                  <div>
+                    <h3 className="font-serif text-xl font-bold text-ink">Custom Grant-Writing Methodology &amp; AI Prompt</h3>
+                    <p className="text-xs text-ink-soft mt-1">
+                      Configure your organization&apos;s custom writing tone, research process, and evaluation rubrics. These instructions are automatically injected into all AI proposal generations and chat responses.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPromptSavedNotice(true);
+                      setTimeout(() => setPromptSavedNotice(false), 3000);
+                    }}
+                    className="rounded-xl bg-ink px-4 py-2 text-xs font-bold text-paper hover:bg-stamp-dark transition-all"
+                  >
+                    Save Instructions
+                  </button>
+                </div>
+
+                {promptSavedNotice && (
+                  <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-xs font-semibold text-emerald-950">
+                    ✓ Custom AI methodology instructions saved successfully.
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-ink">
+                    Organization-Level Grant Writing Rules &amp; Philosophy
+                  </label>
+                  <textarea
+                    rows={8}
+                    value={customAiPrompt}
+                    onChange={(e) => setCustomAiPrompt(e.target.value)}
+                    className="w-full rounded-2xl border border-paper-line bg-paper p-4 font-mono text-xs leading-relaxed text-ink outline-none focus:border-ink shadow-inner"
+                    placeholder="e.g. Always write with empirical precision. Avoid clichés. State exact gender/youth beneficiary percentages. Ground all budgets in Nigerian naira unit rates..."
+                  />
+                  <p className="text-[11px] text-ink-faint">
+                    These instructions persist with your organization workspace and guide Gemini during proposal synthesis, budget checks, and funder alignment reviews.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </>

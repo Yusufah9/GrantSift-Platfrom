@@ -9,11 +9,11 @@ export function AppNav({ email, isAdmin }: { email: string; isAdmin: boolean }) 
 
   const navLinks = [
     { href: "/dashboard", label: "Dashboard" },
+    { href: "/discover", label: "Discover" },
+    { href: "/proposals", label: "Proposals & Apply" },
+    { href: "/tracker", label: "Pipeline Tracker" },
     { href: "/workspace", label: "Organization OS" },
-    { href: "/database", label: "Grant Database" },
-    { href: "/marketplace", label: "Grant Marketplace" },
-    { href: "/tracker", label: "Grant Tracker" },
-    { href: "/funder", label: "Funder Portal" },
+    { href: "/marketplace", label: "Marketplace" },
     { href: "/pricing", label: "Pricing & Pro" },
   ];
 
@@ -46,17 +46,17 @@ export function AppNav({ email, isAdmin }: { email: string; isAdmin: boolean }) 
 
         <div className="flex items-center gap-3 text-xs text-ink-soft">
           <div className="xl:hidden flex items-center gap-1.5">
-            <Link href="/workspace" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
-              Workspace
+            <Link href="/discover" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
+              Discover
             </Link>
-            <Link href="/database" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
-              Grants
-            </Link>
-            <Link href="/marketplace" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
-              Marketplace
+            <Link href="/proposals" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
+              Proposals
             </Link>
             <Link href="/tracker" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
               Tracker
+            </Link>
+            <Link href="/workspace" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
+              Org OS
             </Link>
           </div>
 

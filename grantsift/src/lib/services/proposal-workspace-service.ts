@@ -1,14 +1,15 @@
 export type ProposalType =
   | "grant_proposal"
+  | "technical_proposal"
+  | "business_proposal"
+  | "financial_proposal"
+  | "impact_proposal"
   | "letter_of_inquiry"
   | "concept_note"
   | "expression_of_interest"
   | "project_proposal"
   | "full_application"
-  | "business_proposal"
   | "funding_request"
-  | "technical_proposal"
-  | "financial_proposal"
   | "custom_proposal";
 
 export interface BudgetItem {
@@ -57,23 +58,24 @@ export interface ProposalWorkspaceState {
 }
 
 export const PROPOSAL_TYPE_LABELS: Record<ProposalType, string> = {
+  technical_proposal: "Technical Proposal (Specification §12)",
+  business_proposal: "Business Proposal (Specification §12)",
+  financial_proposal: "Financial Proposal (Specification §12)",
+  impact_proposal: "Impact Proposal (Specification §12)",
   grant_proposal: "Standard Grant Proposal",
   letter_of_inquiry: "Letter of Inquiry (LOI)",
   concept_note: "Concept Note (2-3 Pages)",
   expression_of_interest: "Expression of Interest (EOI)",
   project_proposal: "Detailed Project Proposal",
   full_application: "Full Formal Application",
-  business_proposal: "Commercial & Business Proposal",
   funding_request: "Direct Funding Request",
-  technical_proposal: "Technical & Engineering Proposal",
-  financial_proposal: "Financial & Cost Proposal",
   custom_proposal: "Custom Proposal",
 };
 
 export class ProposalWorkspaceService {
   /**
-   * Generates tailored proposal sections based on selected proposal type (PRD §15).
-   * Strict natural writing: no AI clichés, clear human structure.
+   * Generates tailored proposal sections based on selected proposal type (Specification §12).
+   * Strict natural writing: feeds research directly into Technical, Business, Financial, and Impact proposals.
    */
   createInitialProposal(params: {
     type: ProposalType;
@@ -85,6 +87,11 @@ export class ProposalWorkspaceService {
     solutionStatement?: string;
     fundingAmount?: number;
     currency?: string;
+    grantIntelligence?: {
+      funderPriorities?: string[];
+      previousWinnersPatterns?: string[];
+      whatNeedsToBeFixed?: string[];
+    };
   }): ProposalWorkspaceState {
     const {
       type,
@@ -96,6 +103,7 @@ export class ProposalWorkspaceService {
       solutionStatement = "",
       fundingAmount = 100000,
       currency = "USD",
+      grantIntelligence,
     } = params;
 
     const sections = this.getSectionsForType(type, {
@@ -107,6 +115,7 @@ export class ProposalWorkspaceService {
       solutionStatement,
       fundingAmount,
       currency,
+      grantIntelligence,
     });
 
     const defaultBudget = this.createDefaultBudget(fundingAmount, currency);
@@ -139,39 +148,140 @@ export class ProposalWorkspaceService {
       solutionStatement: string;
       fundingAmount: number;
       currency: string;
+      grantIntelligence?: {
+        funderPriorities?: string[];
+        previousWinnersPatterns?: string[];
+        whatNeedsToBeFixed?: string[];
+      };
     }
   ): ProposalSection[] {
-    const { orgName, country, funderName, grantName, problemStatement, solutionStatement, fundingAmount, currency } = ctx;
+    const { orgName, country, funderName, grantName, problemStatement, solutionStatement, fundingAmount, currency, grantIntelligence } = ctx;
+
+    const prioritiesSnippet = grantIntelligence?.funderPriorities?.join("; ") || "Verified community outcomes and financial discipline";
+    const winnersSnippet = grantIntelligence?.previousWinnersPatterns?.join("; ") || "Pre-arranged signed MoUs, quarterly milestone tranches, and clear break-even trajectory";
 
     switch (type) {
-      case "letter_of_inquiry":
+      // 1. Technical Proposal (Specification §12)
+      case "technical_proposal":
         return [
           {
-            id: "loi-summary",
-            title: "Executive Summary & Purpose",
-            description: "Brief introduction of applicant, funding request, and key project milestone.",
-            content: `${orgName} respectfully submits this Letter of Inquiry to ${funderName} requesting ${currency} ${fundingAmount.toLocaleString()} to support our practical initiative in ${country}.`,
+            id: "tech-exec",
+            title: "Technical Executive Summary & Funder Priority Alignment",
+            description: "Calibrated to funder technical requirements and verified applicant patterns.",
+            content: `${orgName} respectfully submits this Technical Proposal for the ${grantName} administered by ${funderName}. Engineered for field conditions in ${country}, our technical methodology directly incorporates funder priorities: ${prioritiesSnippet}.`,
             isRequired: true,
           },
           {
-            id: "loi-need",
-            title: "Statement of Need",
-            description: "Specific community or market problem being addressed.",
-            content: problemStatement || `In ${country}, frontline communities face persistent structural constraints that require localized, proven intervention models.`,
+            id: "tech-architecture",
+            title: "System Architecture, Engineering & Methodology",
+            description: "Technical specifications, equipment standards, and off-grid performance.",
+            content: solutionStatement || `Our technical architecture incorporates localized components designed for high-availability deployment across ${country}. Operational protocols have been calibrated using field data from preliminary pilot test-runs.`,
             isRequired: true,
           },
           {
-            id: "loi-methodology",
-            title: "Proposed Intervention & Outcomes",
-            description: "Specific activities and tangible outcomes achieved during grant timeline.",
-            content: solutionStatement || `Our team deploys practical field interventions designed to achieve measurable improvements in beneficiary livelihoods within 12 months.`,
+            id: "tech-milestones",
+            title: "Phased Work Plan & Milestone-Gated Deliverables",
+            description: "Structured work packages adopting the milestone structure observed in previous winning proposals.",
+            content: `Following proven grantee implementation frameworks (${winnersSnippet}), technical execution is structured into 4 quarterly deliverables:\n- Q1: Equipment procurement, site permitting, and baseline calibration.\n- Q2: Physical deployment and technical commissioning.\n- Q3: Operating pilot verification with local beneficiary off-takers.\n- Q4: Independent technical audit and handover.`,
             isRequired: true,
           },
           {
-            id: "loi-budget-summary",
-            title: "Budget Overview & Sustainability",
-            description: "High-level allocation and financial transition plan.",
-            content: `The requested ${currency} ${fundingAmount.toLocaleString()} will fund equipment deployment (50%), field personnel (30%), and independent evaluation (20%). Following grant completion, operations sustain through earned local service revenue.`,
+            id: "tech-risk",
+            title: "Technical Risk Management & Quality Assurance",
+            description: "Failsafe measures, maintenance schedules, and equipment lifecycle protocols.",
+            content: `Maintenance reserve protocols and local technician training prevent post-award equipment downtime, addressing a primary evaluation concern flagged by funder review committees.`,
+            isRequired: true,
+          },
+        ];
+
+      // 2. Business Proposal (Specification §12)
+      case "business_proposal":
+        return [
+          {
+            id: "biz-market",
+            title: "Market Opportunity & Target Demand in " + country,
+            description: "Customer segment, market size, and baseline constraints addressed.",
+            content: problemStatement || `Across ${country}, target market participants face acute operational inefficiencies and supply deficits that represent a verifiable addressable market.`,
+            isRequired: true,
+          },
+          {
+            id: "biz-model",
+            title: "Business Model & Post-Grant Revenue Engine",
+            description: "Commercial pricing, customer off-take agreements, and long-term self-sufficiency.",
+            content: `${orgName} operates an earned-revenue model that eliminates perpetual dependency on grant subsidies. Operational break-even is achieved within 18 months through commercial service fees.`,
+            isRequired: true,
+          },
+          {
+            id: "biz-traction",
+            title: "Traction, Customer Validation & Historical Growth",
+            description: "Signed letters of intent, pilot customer testimonials, and operational metrics.",
+            content: `Our venture has validated customer willingness-to-pay through pilot deployments. We have pre-arranged formal commitments with local community off-takers, fulfilling funder due diligence requirements.`,
+            isRequired: true,
+          },
+          {
+            id: "biz-scale",
+            title: "Scaling Strategy & Competitive Advantage",
+            description: "Unit economics, barriers to entry, and geographical expansion roadmap.",
+            content: `Unit economics per deployment show a 34% cost advantage over imported alternatives, providing a durable competitive moat in ${country}.`,
+            isRequired: true,
+          },
+        ];
+
+      // 3. Financial Proposal (Specification §12)
+      case "financial_proposal":
+        return [
+          {
+            id: "fin-summary",
+            title: "Financial Narrative & Cost Assumptions",
+            description: "Overall budget justification for " + currency + " " + fundingAmount.toLocaleString() + " strictly adhering to eligible cost guidelines.",
+            content: `This Financial Proposal provides transparent, itemized justification for ${currency} ${fundingAmount.toLocaleString()}. 100% of budgeted line items fall within the funder's published allowable cost categories, with administrative overhead strictly capped below 10%.`,
+            isRequired: true,
+          },
+          {
+            id: "fin-tranches",
+            title: "Quarterly Milestone Tranche Structure",
+            description: "Disbursement schedule tied to verified quantitative deliverables.",
+            content: `Disbursements are structured into 4 milestone tranches:\n- Tranche 1 (25%): Mobilization and procurement advance.\n- Tranche 2 (25%): Field commissioning and deployment verification.\n- Tranche 3 (30%): Beneficiary verification and operational scale.\n- Tranche 4 (20%): Final monitoring and financial audit.`,
+            isRequired: true,
+          },
+          {
+            id: "fin-governance",
+            title: "Financial Controls, Dual Authorization & Audit Readiness",
+            description: "Accounting controls, dedicated grant escrow account, and independent audit compliance.",
+            content: `${orgName} maintains segregated project accounting, dual-signatory authorizations for all expenditures over $1,000, and annual independent statutory audits.`,
+            isRequired: true,
+          },
+        ];
+
+      // 4. Impact Proposal (Specification §12)
+      case "impact_proposal":
+        return [
+          {
+            id: "imp-toc",
+            title: "Theory of Change & Problem Statement",
+            description: "Logical pathway from inputs and activities to short-, medium-, and long-term community impacts.",
+            content: `By providing localized technological interventions in ${country}, ${orgName} directly removes baseline constraints, producing measurable productivity gains and economic resilience for target constituents.`,
+            isRequired: true,
+          },
+          {
+            id: "imp-beneficiaries",
+            title: "Target Beneficiaries & Disaggregated KPIs",
+            description: "Quantifiable direct and indirect beneficiary projections with gender and youth breakdowns.",
+            content: `Direct Impact Targets over 24 Months:\n- 1,200 direct household beneficiaries verified through GPS survey mapping.\n- At least 60% female smallholder and women-led enterprise participation.\n- 85 verified direct green jobs created for youth in ${country}.`,
+            isRequired: true,
+          },
+          {
+            id: "imp-sdgs",
+            title: "Sustainable Development Goals (SDG) Alignment",
+            description: "Direct mapping to UN SDG targets and indicators.",
+            content: `The project directly advances SDG 2 (Zero Hunger), SDG 7 (Affordable and Clean Energy), SDG 8 (Decent Work & Economic Growth), and SDG 13 (Climate Action).`,
+            isRequired: true,
+          },
+          {
+            id: "imp-me-framework",
+            title: "Monitoring, Evaluation & Learning (MEL) Framework",
+            description: "Quarterly data collection protocols, third-party verification, and learning dissemination.",
+            content: `Quarterly monitoring is conducted via standardized digital surveying tools with third-party verification prior to release of subsequent funding tranches.`,
             isRequired: true,
           },
         ];
@@ -204,63 +314,6 @@ export class ProposalWorkspaceService {
             title: "Expected Results & Key Performance Indicators",
             description: "Target beneficiary numbers and evaluation metrics.",
             content: `Key Deliverables:\n1. 500 direct beneficiary households enrolled and verified in Month 3.\n2. 40% measurable productivity gain documented by Month 12.\n3. Operational break-even achieved by Month 18.`,
-            isRequired: true,
-          },
-        ];
-
-      case "technical_proposal":
-        return [
-          {
-            id: "tech-exec",
-            title: "Technical Executive Summary",
-            description: "Comprehensive technical brief for technical evaluation committee.",
-            content: `${orgName} proposes an engineering and operational solution engineered specifically for operating conditions in ${country}.`,
-            isRequired: true,
-          },
-          {
-            id: "tech-architecture",
-            title: "Technical Architecture & Specifications",
-            description: "Detailed system design, equipment standards, and deployment protocols.",
-            content: `Technical specifications, hardware/software standards, and compliance certifications adherence.`,
-            isRequired: true,
-          },
-          {
-            id: "tech-workplan",
-            title: "Implementation Methodology & Phased Work Plan",
-            description: "Gantt-aligned phases, technical milestones, and deliverable schedules.",
-            content: `Phase 1 (Months 1-3): Site preparation and procurement.\nPhase 2 (Months 4-9): System deployment and operational commissioning.\nPhase 3 (Months 10-12): Performance optimization and handover.`,
-            isRequired: true,
-          },
-          {
-            id: "tech-risk",
-            title: "Technical Risk Management & Quality Assurance",
-            description: "Failsafe measures, maintenance schedules, and security protocols.",
-            content: `Detailed contingency protocols for equipment downtime, power interruption, and supply chain delays.`,
-            isRequired: true,
-          },
-        ];
-
-      case "financial_proposal":
-        return [
-          {
-            id: "fin-summary",
-            title: "Financial Narrative & Cost Principles",
-            description: "Foundational cost principles, value for money, and accounting controls.",
-            content: `This financial proposal provides a transparent, verifiable budget structure for ${currency} ${fundingAmount.toLocaleString()}, demonstrating value for money.`,
-            isRequired: true,
-          },
-          {
-            id: "fin-breakdown",
-            title: "Detailed Category Breakdown & Justifications",
-            description: "Personnel, capital expenditure, operating costs, and monitoring allocations.",
-            content: `Unit cost explanations linked directly to planned implementation activities.`,
-            isRequired: true,
-          },
-          {
-            id: "fin-controls",
-            title: "Financial Governance & Audit Controls",
-            description: "Banking segregation, dual-signatory authorizations, and statutory audit compliance.",
-            content: `Organizational internal controls ensure independent oversight, quarterly expense reconciliation, and third-party annual audits.`,
             isRequired: true,
           },
         ];

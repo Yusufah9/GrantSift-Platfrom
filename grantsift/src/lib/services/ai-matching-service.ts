@@ -32,7 +32,10 @@ export interface DetailedGrantMatch {
   matchScore: number;
   compatibilityLevel: "High" | "Moderate" | "Exploratory";
   relevanceExplanation: string;
+  whyYouMatchSummary: string; // Concise match summary (Specification §7)
   matchedCharacteristics: string[];
+  potentialIssuesToFix: string[]; // What needs to be fixed before applying (Specification §8)
+  weaknessAnalysis: string[];
   eligibilityCompatibility: {
     status: "Eligible" | "Possibly Eligible" | "Ineligible" | "Unknown";
     details: string;
@@ -49,9 +52,14 @@ export interface DetailedGrantMatch {
     status: "Direct Focus" | "Adjacent Alignment" | "Broad Category";
     details: string;
   };
+  timingCompatibility: {
+    status: "Open Now" | "Deadline Approaching" | "Rolling Application" | "Expired" | "Closed";
+    details: string;
+  };
   potentialConcerns: string[];
   missingInformation: string[];
   recommendedNextAction: string;
+  isPaidTierUnlocked?: boolean;
 }
 
 export interface DetailedFunderMatch {
@@ -81,166 +89,269 @@ export interface ProjectRunAnalysisReport {
 
 export class AIMatchingService {
   /**
-   * Performs real, project-driven grant and foundation matching with rich reasoning (PRD §8).
-   * Strict adherence to human writing style: no buzzwords, no dash syntax.
+   * Performs multi-dimensional, non-keyword grant matching (Specification §7, §8).
+   * Evaluates:
+   * 1. Eligibility (Country, org type, stage, revenue, registration)
+   * 2. Funding fit (Requested budget vs grant min/max, co-financing)
+   * 3. Strategic fit (Problem, solution, impact, beneficiaries, SDGs, funder priorities)
+   * 4. Timing (Open now, deadline approaching, rolling)
+   * Produces:
+   * - Match score %
+   * - "Why You Match" explanation
+   * - "Potential issue / what needs to be fixed before applying"
    */
-  analyzeProjectMatches(project: ProjectAnalysisProfile): ProjectRunAnalysisReport {
-    const matchedGrants: DetailedGrantMatch[] = [];
+  matchGrantOpportunity(
+    grant: GrantOpportunity,
+    project: ProjectAnalysisProfile,
+    isPaidUser = false,
+  ): DetailedGrantMatch {
+    let score = 0;
+    const matchedCharacteristics: string[] = [];
+    const potentialIssuesToFix: string[] = [];
+    const missingInfo: string[] = [];
+    const potentialConcerns: string[] = [];
 
-    for (const grant of VERIFIED_GRANTS) {
-      let score = 20;
-      const matchedCharacteristics: string[] = [];
-      const potentialConcerns: string[] = [];
-      const missingInfo: string[] = [];
+    // ---------------------------------------------------------
+    // 1. Eligibility Fit (30 Points Max)
+    // ---------------------------------------------------------
+    const pCountry = (project.country || "").trim().toLowerCase();
+    const countryMatches =
+      grant.eligibility.countries.includes("Global") ||
+      grant.eligibility.countries.some((c) => c.toLowerCase() === pCountry) ||
+      (pCountry === "nigeria" &&
+        (grant.eligibility.regions.includes("Sub-Saharan Africa") ||
+          grant.eligibility.regions.includes("West Africa")));
 
-      // 1. Geographic compatibility check
-      const countryMatches =
-        grant.eligibility.countries.includes("Global") ||
-        grant.eligibility.countries.some((c) => c.toLowerCase() === project.country.toLowerCase()) ||
-        (project.country.toLowerCase() === "nigeria" &&
-          (grant.eligibility.regions.includes("Sub-Saharan Africa") || grant.eligibility.regions.includes("West Africa")));
+    let geoStatus: DetailedGrantMatch["geographicCompatibility"]["status"] = "Restricted";
+    let geoDetails = "";
 
-      let geoStatus: DetailedGrantMatch["geographicCompatibility"]["status"] = "Restricted";
-      let geoDetails = "";
-
-      if (countryMatches) {
-        score += 25;
-        geoStatus = "Fully Eligible";
-        geoDetails = `Applicant country (${project.country}) is explicitly listed in the funder's priority target jurisdictions.`;
-        matchedCharacteristics.push(`Target operating geography (${project.country}) meets funder guidelines.`);
-      } else {
-        geoStatus = "Restricted";
-        geoDetails = `Funder currently specifies focus in ${grant.eligibility.countries.slice(0, 3).join(", ")}.`;
-        potentialConcerns.push(`Geographic restriction: Funder prioritizes ${grant.eligibility.countries.slice(0, 3).join(", ")}.`);
-      }
-
-      // 2. Sector and Focus Areas check
-      const pSector = project.sector.toLowerCase();
-      const pIndustry = project.industry.toLowerCase();
-      const sectorMatches =
-        grant.eligibility.sector.some((s) => s.toLowerCase().includes(pSector) || pSector.includes(s.toLowerCase())) ||
-        grant.focusAreas.some((fa) => fa.toLowerCase().includes(pSector) || fa.toLowerCase().includes(pIndustry));
-
-      let sectorStatus: DetailedGrantMatch["sectorCompatibility"]["status"] = "Broad Category";
-      let sectorDetails = "";
-
-      if (sectorMatches) {
-        score += 25;
-        sectorStatus = "Direct Focus";
-        sectorDetails = `The project focus area matches the grant mandate in ${grant.eligibility.sector.join(", ")}.`;
-        matchedCharacteristics.push(`Primary sector alignment with ${grant.eligibility.sector[0]} mandate.`);
-      } else {
-        score += 5;
-        sectorStatus = "Adjacent Alignment";
-        sectorDetails = `Funder focuses on ${grant.eligibility.sector.join(", ")}, which relates to your activities.`;
-        potentialConcerns.push(`Sector variance: Proposal must articulate clear linkages to ${grant.eligibility.sector[0]}.`);
-      }
-
-      // 3. Organization Type check
-      const typeMatches =
-        grant.eligibility.organizationTypes.includes("Any") ||
-        grant.eligibility.organizationTypes.some((t) => t.toLowerCase() === project.orgType.toLowerCase()) ||
-        (grant.eligibility.organizationTypes.includes("Startup") && project.orgType === "SME");
-
-      if (typeMatches) {
-        score += 15;
-        matchedCharacteristics.push(`Legal organization type (${project.orgType}) is acceptable to the funder.`);
-      } else {
-        potentialConcerns.push(`Funder typically targets ${grant.eligibility.organizationTypes.join(", ")} applicants.`);
-      }
-
-      // 4. Funding Compatibility check
-      let fundingStatus: DetailedGrantMatch["fundingCompatibility"]["status"] = "Well Aligned";
-      let fundingDetails = "";
-      const req = project.fundingRequirement;
-      const min = grant.funding.minimumAward ?? 0;
-      const max = grant.funding.maximumAward ?? 1000000;
-
-      if (req >= min && req <= max) {
-        score += 15;
-        fundingStatus = "Well Aligned";
-        fundingDetails = `Requested budget ($${req.toLocaleString()}) sits comfortably within the grant range ($${min.toLocaleString()} to $${max.toLocaleString()} ${grant.funding.currency}).`;
-        matchedCharacteristics.push(`Budget requirement fits within the published award tranche.`);
-      } else if (req > max) {
-        fundingStatus = "Above Cap";
-        fundingDetails = `Requested amount ($${req.toLocaleString()}) exceeds published maximum grant of $${max.toLocaleString()} ${grant.funding.currency}.`;
-        potentialConcerns.push(`Budget exceeds the single-award cap. Consider pitching a phased pilot.`);
-      } else {
-        fundingStatus = "Below Threshold";
-        fundingDetails = `Requested amount is lower than typical grant tranche.`;
-      }
-
-      // Missing information detection
-      if (!project.hasIncorporation) {
-        missingInfo.push("Official Certificate of Incorporation document required by funder.");
-      }
-      if (grant.application.requiredDocuments.includes("Audited Financial Statements (Latest 2 Years)") && !project.hasAuditedFinancials) {
-        missingInfo.push("Two fiscal years of audited balance sheet and profit/loss statements.");
-      }
-      if (!project.traction || project.traction.length < 20) {
-        missingInfo.push("Documented baseline metrics: number of verified beneficiaries or customers.");
-      }
-
-      // Eligibility Synthesis
-      let elStatus: DetailedGrantMatch["eligibilityCompatibility"]["status"] = "Eligible";
-      let elDetails = "The project satisfies core jurisdictional, legal, and sector criteria.";
-
-      if (!countryMatches) {
-        elStatus = "Ineligible";
-        elDetails = "The organization country does not align with published geographical guidelines.";
-      } else if (potentialConcerns.length > 1) {
-        elStatus = "Possibly Eligible";
-        elDetails = "Eligible on core parameters, but requires addressing specific documentation or stage requirements.";
-      }
-
-      const finalScore = Math.min(98, Math.max(25, score));
-      const compLevel: DetailedGrantMatch["compatibilityLevel"] =
-        finalScore >= 80 ? "High" : finalScore >= 55 ? "Moderate" : "Exploratory";
-
-      // Formulate detailed, human-style explanation without buzzwords
-      const relevanceExplanation = `This opportunity offers non-dilutive capital for initiatives in ${grant.eligibility.sector.join(
-        ", "
-      )}. Your project addresses ${project.problemStatement.slice(0, 90)}..., which aligns with their mandate to support practical solutions in ${project.country}.`;
-
-      const recommendedNextAction =
-        elStatus === "Eligible"
-          ? "Begin drafting the concept note and prepare required Data Room documents."
-          : elStatus === "Possibly Eligible"
-          ? "Confirm whether partnerships with local registered entities can fulfill compliance criteria."
-          : "Monitor upcoming funding cycles or explore regional consortium submissions.";
-
-      matchedGrants.push({
-        grant,
-        matchScore: finalScore,
-        compatibilityLevel: compLevel,
-        relevanceExplanation,
-        matchedCharacteristics,
-        eligibilityCompatibility: { status: elStatus, details: elDetails },
-        fundingCompatibility: { status: fundingStatus, details: fundingDetails },
-        geographicCompatibility: { status: geoStatus, details: geoDetails },
-        sectorCompatibility: { status: sectorStatus, details: sectorDetails },
-        potentialConcerns,
-        missingInformation: missingInfo,
-        recommendedNextAction,
-      });
+    if (countryMatches) {
+      score += 15;
+      geoStatus = "Fully Eligible";
+      geoDetails = `Applicant country (${project.country}) is explicitly within the funder's priority geographic focus.`;
+      matchedCharacteristics.push(`Headquarters in ${project.country} satisfies funder eligibility.`);
+    } else {
+      geoStatus = "Restricted";
+      geoDetails = `Funder prioritizes organizations operating in ${grant.eligibility.countries.slice(0, 3).join(", ")}.`;
+      potentialIssuesToFix.push(`Geographic restriction: Funder specifies focus in ${grant.eligibility.countries.slice(0, 3).join(", ")}. You would need an in-country partner.`);
     }
 
-    // Sort by match score descending
-    matchedGrants.sort((a, b) => b.matchScore - a.matchScore);
+    // Organization Type Check
+    const pOrgType = (project.orgType || "Startup").toLowerCase();
+    const typeMatches =
+      grant.eligibility.organizationTypes.includes("Any") ||
+      grant.eligibility.organizationTypes.some((t) => t.toLowerCase() === pOrgType) ||
+      (grant.eligibility.organizationTypes.includes("Startup") && (pOrgType === "business" || pOrgType === "sme"));
 
-    // Foundation Matching (Foundations relevant even when open grant is closed)
+    if (typeMatches) {
+      score += 10;
+      matchedCharacteristics.push(`Legal organization type (${project.orgType}) matches eligible applicant criteria.`);
+    } else {
+      potentialIssuesToFix.push(`Organization type: Funder primarily accepts ${grant.eligibility.organizationTypes.join(", ")} entities.`);
+    }
+
+    // Stage Compatibility
+    const pStage = (project.stage || "Early Stage").toLowerCase();
+    const stageMatches =
+      grant.eligibility.businessStages.includes("Any") ||
+      grant.eligibility.businessStages.some((s) => s.toLowerCase() === pStage);
+
+    if (stageMatches) {
+      score += 5;
+      matchedCharacteristics.push(`Operational stage (${project.stage}) aligns with funding tranche maturity.`);
+    } else {
+      potentialIssuesToFix.push(`Stage divergence: Funder specifies ${grant.eligibility.businessStages.join(", ")} stage ventures.`);
+    }
+
+    // ---------------------------------------------------------
+    // 2. Funding Fit (20 Points Max)
+    // ---------------------------------------------------------
+    const req = project.fundingRequirement || 50000;
+    const min = grant.funding.minimumAward ?? 0;
+    const max = grant.funding.maximumAward ?? 1000000;
+
+    let fundingStatus: DetailedGrantMatch["fundingCompatibility"]["status"] = "Well Aligned";
+    let fundingDetails = "";
+
+    if (req >= min && req <= max) {
+      score += 20;
+      fundingStatus = "Well Aligned";
+      fundingDetails = `Target budget ($${req.toLocaleString()}) fits cleanly within the published award range ($${min.toLocaleString()} to $${max.toLocaleString()} ${grant.funding.currency}).`;
+      matchedCharacteristics.push(`Requested amount fits within published award range.`);
+    } else if (req > max) {
+      score += 8;
+      fundingStatus = "Above Cap";
+      fundingDetails = `Target amount ($${req.toLocaleString()}) exceeds the single-award cap of $${max.toLocaleString()} ${grant.funding.currency}.`;
+      potentialIssuesToFix.push(`Requested amount ($${req.toLocaleString()}) exceeds maximum grant cap ($${max.toLocaleString()}). Pitch a phased deployment.`);
+    } else {
+      score += 10;
+      fundingStatus = "Below Threshold";
+      fundingDetails = `Target amount ($${req.toLocaleString()}) is below typical award size ($${min.toLocaleString()}).`;
+      matchedCharacteristics.push(`Within overall funding capacity of the funder.`);
+    }
+
+    // ---------------------------------------------------------
+    // 3. Strategic Fit & Impact (35 Points Max)
+    // ---------------------------------------------------------
+    const pSector = (project.sector || project.industry || "").toLowerCase();
+    const pIndustry = (project.industry || "").toLowerCase();
+
+    const sectorMatches =
+      grant.eligibility.sector.some((s) => s.toLowerCase().includes(pSector) || pSector.includes(s.toLowerCase())) ||
+      grant.focusAreas.some((fa) => fa.toLowerCase().includes(pSector) || fa.toLowerCase().includes(pIndustry));
+
+    let sectorStatus: DetailedGrantMatch["sectorCompatibility"]["status"] = "Broad Category";
+    let sectorDetails = "";
+
+    if (sectorMatches) {
+      score += 25;
+      sectorStatus = "Direct Focus";
+      sectorDetails = `Project operates directly within the funder's priority sector: ${grant.eligibility.sector.join(", ")}.`;
+      matchedCharacteristics.push(`Direct strategic focus on ${grant.eligibility.sector[0]}.`);
+    } else {
+      score += 8;
+      sectorStatus = "Adjacent Alignment";
+      sectorDetails = `Funder prioritizes ${grant.eligibility.sector.join(", ")}, which connects to your initiatives.`;
+      potentialIssuesToFix.push(`Sector alignment: Frame your technology/solution directly around ${grant.eligibility.sector[0]} outcomes.`);
+    }
+
+    // Impact & Beneficiary Assessment
+    if (project.targetBeneficiaries && project.targetBeneficiaries.trim().length > 10) {
+      score += 5;
+      matchedCharacteristics.push(`Defined target beneficiary group aligns with funder mandate.`);
+    } else {
+      potentialIssuesToFix.push(`Missing quantifiable target beneficiaries in profile: Funder requires specific direct/indirect beneficiary counts.`);
+    }
+
+    // Climate / SDGs Assessment
+    if (grant.focusAreas.includes("Climate") && !(project.sdgs?.some((s) => s.includes("13") || s.toLowerCase().includes("climate")))) {
+      potentialIssuesToFix.push(`The grant requires evidence of measurable climate impact or environmental resilience, which is currently unstated in your profile.`);
+    } else {
+      score += 5;
+    }
+
+    // ---------------------------------------------------------
+    // 4. Timing & Lifecycle (15 Points Max)
+    // ---------------------------------------------------------
+    let timingStatus: DetailedGrantMatch["timingCompatibility"]["status"] = "Open Now";
+    let timingDetails = "Application portal is currently accepting submissions.";
+
+    if (grant.deadlineType === "rolling") {
+      score += 15;
+      timingStatus = "Rolling Application";
+      timingDetails = "Rolling window with continuous periodic review cycles.";
+      matchedCharacteristics.push("Rolling application window active.");
+    } else if (grant.deadline) {
+      const deadlineDate = new Date(grant.deadline);
+      const now = new Date();
+      const daysRemaining = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysRemaining < 0) {
+        score += 0;
+        timingStatus = "Expired";
+        timingDetails = `Deadline passed on ${grant.deadline}.`;
+        potentialIssuesToFix.push(`This funding cycle has closed. Monitor for next round or upcoming reopened window.`);
+      } else if (daysRemaining <= 14) {
+        score += 12;
+        timingStatus = "Deadline Approaching";
+        timingDetails = `Deadline closing soon (${daysRemaining} days remaining on ${grant.deadline}).`;
+        potentialIssuesToFix.push(`Urgent timing: Only ${daysRemaining} days remaining before final deadline.`);
+      } else {
+        score += 15;
+        timingStatus = "Open Now";
+        timingDetails = `Open with comfortable drafting runway (${daysRemaining} days remaining).`;
+        matchedCharacteristics.push(`Active application runway: Deadline is ${grant.deadline}.`);
+      }
+    } else {
+      score += 10;
+      timingStatus = "Open Now";
+    }
+
+    // Documentation readiness checks
+    if (!project.hasIncorporation) {
+      missingInfo.push("Official Certificate of Incorporation (e.g. CAC / 501(c)(3)).");
+      potentialIssuesToFix.push("Entity registration certificate required before award disbursement.");
+    }
+    if (grant.application.requiredDocuments.some((d) => d.toLowerCase().includes("audit")) && !project.hasAuditedFinancials) {
+      missingInfo.push("Audited Financial Statements (Latest 1-2 Years).");
+      potentialIssuesToFix.push("Audited financial statements required for this award threshold.");
+    }
+
+    const finalScore = Math.min(97, Math.max(25, score));
+    const compLevel: DetailedGrantMatch["compatibilityLevel"] =
+      finalScore >= 80 ? "High" : finalScore >= 55 ? "Moderate" : "Exploratory";
+
+    // Build the "Why You Match" summary (Specification §7, §8)
+    const whySnippet = `${project.country || "Target Region"} + ${grant.eligibility.sector[0] || "Innovation"} + ${project.orgType || "Organization"}`;
+    const relevanceExplanation = `This opportunity matches ${project.orgName || "your organization"} because you are operating in ${project.country || "the target region"} in ${project.sector || project.industry || "this sector"}. The funder (${grant.funderName}) accepts ${grant.eligibility.organizationTypes.join(", ")} entities at ${project.stage || "early"} stage and provides non-dilutive funding within your requested range.`;
+
+    const recommendedNextAction =
+      finalScore >= 80
+        ? "Review Grant Intelligence, verify required documents checklist, and proceed to Technical Proposal generation."
+        : "Address identified weak profile areas (e.g. audited metrics or localized partners) before initiating submission.";
+
+    let elStatus: DetailedGrantMatch["eligibilityCompatibility"]["status"] = "Eligible";
+    let elDetails = "The project satisfies core jurisdictional, legal, and thematic criteria.";
+    if (!countryMatches) {
+      elStatus = "Ineligible";
+      elDetails = "The organization does not currently satisfy published geographic eligibility.";
+    } else if (potentialIssuesToFix.length > 2) {
+      elStatus = "Possibly Eligible";
+      elDetails = "Eligible on core parameters, but requires addressing specific documentation or metric requirements.";
+    }
+
+    return {
+      grant,
+      matchScore: finalScore,
+      compatibilityLevel: compLevel,
+      relevanceExplanation,
+      whyYouMatchSummary: whySnippet,
+      matchedCharacteristics,
+      potentialIssuesToFix,
+      weaknessAnalysis: potentialIssuesToFix,
+      eligibilityCompatibility: { status: elStatus, details: elDetails },
+      fundingCompatibility: { status: fundingStatus, details: fundingDetails },
+      geographicCompatibility: { status: geoStatus, details: geoDetails },
+      sectorCompatibility: { status: sectorStatus, details: sectorDetails },
+      timingCompatibility: { status: timingStatus, details: timingDetails },
+      potentialConcerns,
+      missingInformation: missingInfo,
+      recommendedNextAction,
+      isPaidTierUnlocked: isPaidUser,
+    };
+  }
+
+  /**
+   * Matches candidate grants against a project profile.
+   */
+  matchMultipleGrants(
+    grants: GrantOpportunity[],
+    project: ProjectAnalysisProfile,
+    isPaidUser = false,
+  ): DetailedGrantMatch[] {
+    const results = grants.map((g) => this.matchGrantOpportunity(g, project, isPaidUser));
+    return results.sort((a, b) => b.matchScore - a.matchScore);
+  }
+
+  /**
+   * Main analysis execution for full workspace reports.
+   */
+  analyzeProjectMatches(project: ProjectAnalysisProfile, candidateGrants?: GrantOpportunity[], isPaidUser = false): ProjectRunAnalysisReport {
+    const grantsToEvaluate = candidateGrants || VERIFIED_GRANTS;
+    const matchedGrants = this.matchMultipleGrants(grantsToEvaluate, project, isPaidUser);
+
+    // Foundation Matching
     const matchedFunders: DetailedFunderMatch[] = [];
-
     for (const funder of VERIFIED_FUNDERS) {
       const geoMatch =
         funder.focusGeographies.includes("Global") ||
         funder.focusGeographies.includes("Pan-Africa") ||
-        funder.focusGeographies.some((g) => g.toLowerCase().includes(project.country.toLowerCase()));
+        funder.focusGeographies.some((g) => g.toLowerCase().includes((project.country || "").toLowerCase()));
 
       const sectorMatch = funder.focusSectors.some(
         (s) =>
-          s.toLowerCase().includes(project.sector.toLowerCase()) ||
-          project.sector.toLowerCase().includes(s.toLowerCase())
+          s.toLowerCase().includes((project.sector || "").toLowerCase()) ||
+          (project.sector || "").toLowerCase().includes(s.toLowerCase())
       );
 
       if (geoMatch || sectorMatch) {
@@ -248,35 +359,33 @@ export class AIMatchingService {
 
         matchedFunders.push({
           funder,
-          relevanceExplanation: `${funder.name} maintains ongoing philanthropic giving in ${funder.focusSectors.join(
-            ", "
-          )} across ${funder.focusGeographies.join(", ")}.`,
-          whyRelevant: `They have disbursed ${funder.historicalGivingSummary} and prioritize ${funder.givingPreferences?.slice(0, 2).join("; ") || "community-anchored programs"}.`,
+          relevanceExplanation: `${funder.name} maintains ongoing giving in ${funder.focusSectors.join(", ")} across ${funder.focusGeographies.join(", ")}.`,
+          whyRelevant: `Disbursed ${funder.historicalGivingSummary} and prioritizes ${funder.givingPreferences?.slice(0, 2).join("; ") || "community-anchored programs"}.`,
           matchedThematicAreas: funder.focusSectors.filter(
             (s) =>
-              s.toLowerCase().includes(project.sector.toLowerCase()) ||
-              project.sector.toLowerCase().includes(s.toLowerCase())
+              s.toLowerCase().includes((project.sector || "").toLowerCase()) ||
+              (project.sector || "").toLowerCase().includes(s.toLowerCase())
           ),
-          alignmentNotes: `Historical giving focuses on ${funder.typicalGrantSize.currency} ${funder.typicalGrantSize.min?.toLocaleString()} to ${funder.typicalGrantSize.max?.toLocaleString()} allocations.`,
+          alignmentNotes: `Typical award: ${funder.typicalGrantSize.currency} ${funder.typicalGrantSize.min?.toLocaleString()} to ${funder.typicalGrantSize.max?.toLocaleString()}.`,
           openOpportunities: openOpps,
           strategicApproach:
             openOpps.length > 0
               ? "Apply directly to the active funding window currently open."
-              : "Prepare an unsolicited Letter of Inquiry (LOI) or initiate relationship building with program officers.",
+              : "Prepare an unsolicited Letter of Inquiry (LOI) to the programmatic team.",
         });
       }
     }
 
     const highPriorityRecommendations = [
-      `Complete missing Data Room uploads: ${matchedGrants[0]?.missingInformation[0] || "Financial projections"}`,
-      `Structure the proposal around verifiable community metrics in ${project.country}.`,
-      "Schedule founder review 72 hours prior to the earliest deadline.",
+      `Address highest-priority application gap: ${matchedGrants[0]?.potentialIssuesToFix[0] || "Upload audited accounts"}`,
+      `Structure the proposal around verifiable community metrics in ${project.country || "your operating country"}.`,
+      "Review previous winner traits to calibrate monitoring and evaluation (M&E) milestones.",
     ];
 
     return {
       timestamp: new Date().toISOString(),
       projectSummary: {
-        name: project.projectName,
+        name: project.projectName || "Default Project",
         orgName: project.orgName,
         country: project.country,
         sector: project.sector,
@@ -291,3 +400,4 @@ export class AIMatchingService {
 }
 
 export const aiMatchingService = new AIMatchingService();
+

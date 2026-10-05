@@ -22,13 +22,16 @@ export class ProjectService {
   async createProject(
     userId: string,
     org: OrganizationProfileInput,
-    grant: GrantTargetInput,
+    grant?: Partial<GrantTargetInput> | null,
   ) {
-    let funderHostname: string;
-    try {
-      funderHostname = new URL(grant.grantFunderUrl).hostname;
-    } catch {
-      throw new AppError("VALIDATION_ERROR", "Enter a valid funder URL.");
+    let funderHostname: string | null = null;
+    const funderUrl = grant?.grantFunderUrl?.trim();
+    if (funderUrl) {
+      try {
+        funderHostname = new URL(funderUrl).hostname;
+      } catch {
+        throw new AppError("VALIDATION_ERROR", "Enter a valid funder URL.");
+      }
     }
 
     try {
@@ -44,25 +47,29 @@ export class ProjectService {
         org_team_size: org.orgTeamSize ?? null,
         org_year_founded: org.orgYearFounded ?? null,
         org_funding_to_date: org.orgFundingToDate ?? null,
-        grant_funder_url: grant.grantFunderUrl,
-        grant_funder_name: funderHostname,
-        grant_amount_sought: grant.grantAmountSought ?? null,
-        grant_deadline: grant.grantDeadline ?? null,
+        grant_funder_url: funderUrl || null,
+        grant_funder_name: funderHostname || "Auto-Discovered Grants",
+        grant_amount_sought: grant?.grantAmountSought ?? (org.fundingRequired ?? null),
+        grant_deadline: grant?.grantDeadline ?? null,
       });
 
-      // The funder URL is always a source. Pasted requirements, when given,
+      // The funder URL is a source when provided. Pasted requirements, when given,
       // are a second, user-provided source — never merged into the same
       // row, so each keeps its own trust label and traceability.
       const sourcesToInsert = [
-        {
-          project_id: project.id,
-          kind: "funder_org" as const,
-          trust: "official_funder" as const,
-          funder_url: grant.grantFunderUrl,
-          funder_name: funderHostname,
-          status: "pending" as const,
-        },
-        ...(grant.pastedRequirements
+        ...(funderUrl && funderHostname
+          ? [
+              {
+                project_id: project.id,
+                kind: "funder_org" as const,
+                trust: "official_funder" as const,
+                funder_url: funderUrl,
+                funder_name: funderHostname,
+                status: "pending" as const,
+              },
+            ]
+          : []),
+        ...(grant?.pastedRequirements
           ? [
               {
                 project_id: project.id,
@@ -75,11 +82,14 @@ export class ProjectService {
           : []),
       ];
 
-      const { error: sourceError } = await this.supabase.from("sources").insert(sourcesToInsert);
-      if (sourceError) throw sourceError;
+      if (sourcesToInsert.length > 0) {
+        const { error: sourceError } = await this.supabase.from("sources").insert(sourcesToInsert);
+        if (sourceError) throw sourceError;
+      }
 
       return project;
     } catch (cause) {
+      if (cause instanceof AppError) throw cause;
       throw new AppError("DATABASE_ERROR", "Couldn't create the project. Please try again.", cause);
     }
   }

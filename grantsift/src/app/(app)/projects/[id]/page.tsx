@@ -8,6 +8,7 @@ import { ReadinessList } from "@/components/projects/readiness-list";
 import { SopTable } from "@/components/projects/sop-table";
 import { ProjectActionForm } from "@/components/projects/project-action-form";
 import { generateReadinessAction, generateSopAction } from "@/app/(app)/projects/[id]/actions";
+import { FindGrantsEngine } from "@/components/discovery/find-grants-engine";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,16 +26,51 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       supabase.from("sop_tasks").select("*").eq("project_id", id).order("sort_order", { ascending: true }),
     ]);
 
+  const projectOrgProfile = {
+    projectName: project.name,
+    orgName: project.org_name || project.name || "Your Organization",
+    country: project.org_country || "Nigeria",
+    industry: project.org_industry || "Technology",
+    sector: project.org_industry || "Technology",
+    orgType: "Startup",
+    stage: "Early Stage",
+    fundingRequirement: Number(project.grant_amount_sought) || 150000,
+    problemStatement: "Advancing scalable sustainable development.",
+    solutionStatement: "Deploying high-impact technology solutions.",
+    targetBeneficiaries: "Community smallholders and local enterprises",
+    hasIncorporation: true,
+    hasAuditedFinancials: false,
+  };
+
   return (
     <div className="space-y-10">
       <div>
-        <p className="font-mono text-xs uppercase tracking-wide text-ink-faint">Project</p>
-        <h1 className="mt-2 font-serif text-2xl text-ink">{project.org_name}</h1>
-        <p className="mt-1 text-ink-soft">{project.grant_funder_name}</p>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-stamp-tint px-2.5 py-0.5 text-xs font-mono font-semibold uppercase text-stamp-dark">
+            Organization Workspace
+          </span>
+          <span className="text-xs text-ink-faint">
+            &bull; {project.org_country} &bull; {project.org_industry}
+          </span>
+        </div>
+        <h1 className="mt-2 font-serif text-3xl font-bold text-ink">{project.org_name}</h1>
+        <p className="mt-1 text-sm text-ink-soft">
+          {project.grant_funder_url
+            ? `Targeting: ${project.grant_funder_name}`
+            : "Permanent Grant Discovery Mode · Real Opportunities Matched Continuously"}
+        </p>
       </div>
 
+      {/* Discovery Engine Section for this Project */}
+      <section className="space-y-4">
+        <FindGrantsEngine
+          organizationProfile={projectOrgProfile}
+          isPaidUser={true}
+        />
+      </section>
+
       <section className="border border-paper-line bg-paper-raised p-6">
-        <h2 className="font-serif text-lg text-ink">Analysis</h2>
+        <h2 className="font-serif text-lg text-ink">Analysis &amp; Pipeline Status</h2>
         <div className="mt-4">
           <ProcessingStages jobs={jobs ?? []} />
         </div>
