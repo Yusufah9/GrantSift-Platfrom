@@ -6,6 +6,7 @@ import type { GrantOpportunity } from "@/lib/types/grant-discovery";
 import { cleanPlainText } from "@/lib/ai/ai-text-sanitizer";
 import {
   MASTER_GRANT_WRITER_CORE,
+  HUMAN_VOICE_RULES,
   ASSISTANT_CHAT_SYSTEM_PROMPT,
   GRANT_WRITER_SYSTEM_PROMPT,
   QUALITY_REVIEWER_SYSTEM_PROMPT,
@@ -411,8 +412,7 @@ ${pastGranteesFormatted}`;
   }
 
   /**
-   * Generates tailored, opportunity-specific gra  /**
-   * Generates a comprehensive, opportunity-specific grant proposal (10 distinct sections)
+   * Generates a detailed, opportunity-specific grant proposal (10 distinct sections)
    * grounded in applicant evidence, funder requirements, and zero-markdown formatting rules.
    */
   async generateProposal(params: ProposalGenerationParams): Promise<{ title: string; content: string }> {
@@ -425,7 +425,7 @@ ${pastGranteesFormatted}`;
 
     const totalFunding = fundingAmount || 150000;
 
-    const prompt = `Write a comprehensive, funder-aligned, and deeply detailed ${formattedType} for:
+    const prompt = `Write a clear, detailed ${formattedType} that a busy reviewer will want to finish reading. It is for:
 Organization Name: ${orgName}
 Industry or Sector: ${industry}
 Country of Operation: ${country}
@@ -436,22 +436,22 @@ Proposed Solution: ${solutionStatement || "Deploying a community-anchored, pract
 Target Beneficiaries: ${params.targetBeneficiaries || "Local communities, smallholder enterprises, and families"}
 ${customAiPrompt ? `User Grant Writing Methodology:\n${customAiPrompt}` : ""}
 
-STRICT WRITING & STRUCTURAL RULES:
-1. Write like an experienced principal grant writer. Use natural, precise, persuasive English.
-2. DO NOT use raw Markdown characters: no asterisks (**), no hashes (###), and no em dashes (—). Use bullet points (•) and plain text numbers.
-3. DO NOT use forbidden buzzwords: "fragmented", "frontlines", "unlock", "leverage", "game changer", "transformative", "revolutionary", "cutting edge", "seamless", "robust", "holistic", "empower communities", "drive impact".
-4. The proposal MUST be well detailed, structured, and organized across these 10 distinct plain text sections:
+WRITING RULES:
+${HUMAN_VOICE_RULES}
+STRUCTURE:
+Use these 10 plain text section titles, each on its own line:
    Section 1: Executive Summary and Alignment with Funder Priorities
-   Section 2: Statement of Need, Root Cause Analysis and Contextual Baseline
-   Section 3: Project Goals, SMART Objectives and Theory of Change
-   Section 4: Implementation Methodology and Phased Milestone Work Packages
-   Section 5: Direct and Indirect Beneficiary Quantification
-   Section 6: Detailed Activity-Based Budget and Financial Cost Justification
-   Section 7: Monitoring, Evaluation, Accountability and Learning Framework
-   Section 8: Operational, Financial and Currency Risk Management Strategy
-   Section 9: Organizational Capacity, Governance Structure and Key Personnel
-   Section 10: Post-Grant Financial Sustainability, Exit Strategy and Commercial Break-Even
-5. Include explicit numerical targets, timeline gates, verified activity costs that sum exactly to $${totalFunding.toLocaleString()} USD, and concrete field implementation mechanics.`;
+   Section 2: Problem Statement, Root Causes and the Situation Today
+   Section 3: Goals, SMART Objectives and Theory of Change
+   Section 4: Proposed Solution, How We Will Do It and Phased Work Packages
+   Section 5: Who Benefits and How Many
+   Section 6: Budget and Why Each Cost Is Needed
+   Section 7: Monitoring, Evaluation and Learning
+   Section 8: Risks and How We Will Handle Them
+   Section 9: Our Team, Governance and Track Record
+   Section 10: Post-Grant Transition Plan and Sustainability
+Open the Executive Summary and the Problem Statement with one short, real human moment drawn from the applicant data (a type of person, a place, what goes wrong for them). Do not invent names or quotes.
+Budget lines must add up exactly to $${totalFunding.toLocaleString()} USD. Mark any number that is not in the applicant data as "(estimate, to confirm)".`
 
     try {
       const generatedContent = await this.gemini.generateText(prompt, "synthesis", GRANT_WRITER_SYSTEM_PROMPT);
@@ -472,73 +472,89 @@ STRICT WRITING & STRUCTURAL RULES:
     const meCost = Math.round(totalAward * 0.10);
     const adminCost = totalAward - (equipCost + persCost + opsCost + meCost);
 
+    const problem = problemStatement?.trim();
+    const solution = solutionStatement?.trim();
+    const who = params.targetBeneficiaries?.trim() || `the people and small businesses ${orgName} already works with in ${country}`;
+    const funder = funderName ?? "this funding program";
+    const usd = (n: number) => `$${n.toLocaleString()} USD`;
+
     const content = `${title}
 Applicant Organization: ${orgName}
 Sector: ${industry}
-Operating Jurisdiction: ${country}
-Target Award Allocation: $${totalAward.toLocaleString()} USD
-Grant Opportunity: ${funderName ?? "Institutional Funding Program"}
+Where We Work: ${country}
+Amount Requested: ${usd(totalAward)}
+Funder: ${funder}
+
+Note to the team: this is a starting draft written without live research. Every number marked "(to confirm)" needs a source or a quote before we submit.
 
 Section 1: Executive Summary and Alignment with Funder Priorities
-${orgName} respectfully submits this comprehensive ${formattedType.toLowerCase()} to establish verifiable, community-anchored operational solutions in ${industry} across ${country}. Operating with demonstrated field capabilities, our initiative directly resolves systemic supply deficits and service bottlenecks. Over a structured 24-month lifecycle, an investment of $${totalAward.toLocaleString()} USD will fund technical equipment deployment, community training, and field commissioning, delivering direct economic gains to verified participants while establishing complete financial self-sufficiency.
+Think about one of ${who}. They wake up, go to work, and hit the same wall every week. ${problem ? problem : `In ${industry}, that wall is a gap we see in our daily work in ${country}.`}
+${orgName} exists to fix that. ${solution ? solution : `We have a practical plan to close the gap, and we have tested parts of it already.`}
+We are asking ${funder} for ${usd(totalAward)} over 24 months. The money pays for equipment, people, field work, and honest measurement. At the end, the work should pay for itself.
+Why ${funder}? Because what you fund and what we do point at the same problem. We will show that section by section.
 
-Section 2: Problem Statement and Contextual Needs Analysis
-Across ${country}, target constituents face documented operational obstacles in the ${industry} domain.
-${problemStatement || `Field assessments indicate that over 58% of target producers and local community members operate without reliable access to essential productive infrastructure, resulting in substantial post-harvest or operational losses.`}
-• Baseline Deficiency: Baseline evaluations reveal that local enterprises lose an estimated 32% of annual operating margins due to inadequate technical tooling and volatile supply chains.
-• Root Causes: The primary systemic drivers include limited rural capital availability, high equipment import tariffs, and an absence of localized maintenance technicians.
-• Urgency: Prompt intervention establishes critical local processing infrastructure before compounding macroeconomic volatility further reduces community productivity.
+Section 2: Problem Statement, Root Causes and the Situation Today
+Here is the problem in plain words. ${problem ? problem : `People in our target group cannot get a basic service they need to earn and grow.`}
+It costs them time and money every week. We will add the exact local figures from our baseline survey (to confirm).
+Why does it keep happening? From our work, three reasons come up again and again:
+• Money: small operators can't raise the upfront cost of the tools they need.
+• Skills: there are too few trained people nearby to set up and repair things.
+• Trust: past programs started and stopped, so people are slow to sign up again.
+And if nothing changes, the gap gets wider. Prices go up, and the people with the least room to absorb it pay first.
 
-Section 3: Project Goals, SMART Objectives and Theory of Change
-The primary goal is to deploy localized infrastructure that increases community participant incomes by 35% within 18 months.
-• Objective 1: Commission 12 localized operational processing units across target operating zones within the first 6 months.
-• Objective 2: Deliver hands-on operational training to 850 local enterprise operators and cooperative leaders by Month 12.
-• Objective 3: Achieve full operational break-even and financial transition by Month 20 with zero reliance on philanthropic subsidies.
-• Theory of Change: If local operators are equipped with reliable hardware, standardized workflows, and maintenance capability, then operational downtime decreases by 65%, resulting in sustained income expansion and community resilience.
+Section 3: Goals, SMART Objectives and Theory of Change
+Our goal is simple. Raise the income of the people we serve, and keep it raised after the grant ends.
+• Objective 1: Set up the first working sites in our target areas by Month 6.
+• Objective 2: Train local operators to run and repair them by Month 12 (target number to confirm).
+• Objective 3: Cover running costs from service fees by Month 20.
+Theory of Change: if local operators get reliable tools, clear processes and repair skills, then downtime falls. When downtime falls, they earn more. When they earn more, they can pay a fair fee that keeps the service running.
 
-Section 4: Proposed Solution, Implementation Methodology and Phased Work Packages
-Execution is organized into 4 milestone-gated quarterly work packages:
-• Work Package 1 (Months 1 to 3): Site surveys, statutory local permitting, stakeholder cooperative MoUs, and equipment procurement.
-• Work Package 2 (Months 4 to 9): Physical delivery, facility installation, technical commissioning, and initial operator certification.
-• Work Package 3 (Months 10 to 18): Full operational run, supply chain integration, participant output tracking, and revenue generation.
-• Work Package 4 (Months 19 to 24): Independent third-party audit, asset ownership transfer to local cooperatives, and dissemination of findings.
+Section 4: Proposed Solution, How We Will Do It and Phased Work Packages
+${solution ? solution : `Here's how it works.`} We break the work into four parts so the funder can see progress every quarter.
+• Work Package 1 (Months 1 to 3): Visit sites, get local permits, sign agreements with community groups, and buy equipment.
+• Work Package 2 (Months 4 to 9): Install, test and hand over the first sites. Train the first operators.
+• Work Package 3 (Months 10 to 18): Run at full pace. Track output and income for every participant.
+• Work Package 4 (Months 19 to 24): Bring in an independent reviewer, transfer assets to local owners, and share what we learned.
 
-Section 5: Direct and Indirect Beneficiary Quantification
-• Direct Beneficiaries: 1,450 verified smallholder operators and cooperative members enrolled through biometric and GPS verification.
-• Female and Youth Participation: A minimum of 55% of all direct training slots and management roles are dedicated to women and youth.
-• Indirect Beneficiaries: 7,800 community members benefiting from localized service access and reduced retail prices for staple commodities.
-• Alignment with Global Goals: Directly advances UN Sustainable Development Goal 8 (Decent Work and Economic Growth) and Goal 9 (Industry, Innovation and Infrastructure).
+Section 5: Who Benefits and How Many
+• Direct: ${who}. We will confirm the exact count from our enrolment list (to confirm).
+• Women and young people: at least half of training places and team roles go to them.
+• Indirect: families and nearby customers who get a closer, cheaper service.
+This links to UN Sustainable Development Goal 8 (decent work) and Goal 9 (infrastructure).
 
-Section 6: Detailed Activity-Based Budget and Financial Cost Justification
-The requested award of $${totalAward.toLocaleString()} USD is allocated across five transparent cost centers:
-• Equipment and Hardware Procurement ($${equipCost.toLocaleString()} USD, 40%): Commercial field units, solar backup inverters, and precision measuring tools.
-• Key Personnel and Field Technical Staff ($${persCost.toLocaleString()} USD, 28%): Project Director, Lead Field Engineer, and 4 community operations officers for 24 months.
-• Direct Field Operations and Transport ($${opsCost.toLocaleString()} USD, 16%): Site preparation, vehicle fuel, regional haulage, and technical maintenance reserves.
-• Monitoring, Evaluation and Audit ($${meCost.toLocaleString()} USD, 10%): Baseline field surveys, mid-term evaluation, and independent statutory financial audit.
-• Administrative and Indirect Overhead ($${adminCost.toLocaleString()} USD, 6%): Compliance filings, project communications, and financial insurance.
+Section 6: Budget and Why Each Cost Is Needed
+The full request is ${usd(totalAward)}. Here is where every dollar goes:
+• Equipment and tools: ${usd(equipCost)} (40%). This is the core of the work. Without it nothing runs.
+• People: ${usd(persCost)} (28%). A project lead, a field engineer and community officers for 24 months.
+• Field operations and transport: ${usd(opsCost)} (16%). Site setup, fuel, haulage and a repair reserve.
+• Monitoring, evaluation and audit: ${usd(meCost)} (10%). Baseline survey, mid-term check and an external audit.
+• Admin and overhead: ${usd(adminCost)} (6%). Compliance, insurance and reporting.
+Unit costs will be backed by supplier quotes in the data room before we submit.
 
-Section 7: Monitoring, Evaluation, Accountability and Learning Framework
-Progress is tracked through an objective digital indicator matrix:
-• Baseline Verification: Pre-intervention economic surveys conducted at Month 1 establish verified baseline production volumes.
-• Quarterly Milestones: Technical milestones are evaluated quarterly against predefined output quotas prior to disbursement release.
-• Independent Evaluation: An independent audit firm conducts unannounced field inspections at Months 12 and 24 to verify participant welfare metrics.
+Section 7: Monitoring, Evaluation and Learning
+We measure before we start, so we can prove what changed.
+• Month 1: baseline survey of income and output.
+• Every quarter: check results against targets before the next payment is released.
+• Months 12 and 24: an independent reviewer visits sites without notice and checks the numbers.
+And we will share what didn't work, not only what did.
 
-Section 8: Operational, Financial and Currency Risk Management Strategy
-• Foreign Exchange Fluctuation: Equipment orders are secured through forward purchase agreements to mitigate local currency depreciation.
-• Supply Chain Delay: Dual vendor sourcing agreements are maintained to prevent procurement bottlenecks.
-• Equipment Downtime: Local technicians undergo certified apprenticeship training, maintaining an on-site inventory of critical replacement parts.
+Section 8: Risks and How We Will Handle Them
+• Exchange rate swings: we lock in equipment prices early and keep part of the budget in USD.
+• Supplier delays: we keep two approved suppliers for every key item.
+• Breakdowns: trained local technicians and a stock of spare parts on site.
+• Low sign-up: we start with community groups that already trust us.
 
-Section 9: Organizational Governance, Team Capacity and Compliance Track Record
-${orgName} operates under structured governance protocols:
-• Executive Leadership: The leadership team possesses over 15 combined years of hands-on project management experience in ${country}.
-• Financial Safeguards: Segregated grant accounting, dual-signatory bank approvals, and cloud-backed transaction logs ensure zero financial leakage.
-• Statutory Compliance: Fully registered corporate entity with up-to-date tax clearance and prior clean audit certifications.
+Section 9: Our Team, Governance and Track Record
+${orgName} is a registered organization in ${country}. Our team has run field projects here before (years and examples to confirm).
+• Money controls: a separate grant account, two signatories for every payment, and digital records.
+• Compliance: current tax clearance and past audit reports will be in the data room.
 
-Section 10: Post-Grant Transition Plan, Financial Sustainability and Commercial Break-Even
-Sustainability is embedded directly into the operational model:
-• Earned Revenue Transition: By Month 16, modest service fees charged for equipment usage generate $8,200 USD in monthly recurring operating revenue.
-• Operational Break-Even: Month 20 operating revenues exceed all recurring maintenance and personnel costs, ending all grant subsidy reliance.
-• Community Asset Transfer: At Month 24, equipment ownership covenants transition to local operating cooperatives, ensuring enduring institutional legacy.`;
+Section 10: Post-Grant Transition Plan and Sustainability
+The grant starts the work. It should not have to keep it alive.
+• From Month 16: a small, fair service fee starts to cover running costs (amount to confirm with users).
+• By Month 20: fees cover maintenance and staff.
+• At Month 24: local groups own the equipment, so the service stays where it belongs.
+That's the plan. If ${funder} sees a gap, we'd rather hear it now and fix it.`;
 
     return { title, content: cleanPlainText(content) };
   }

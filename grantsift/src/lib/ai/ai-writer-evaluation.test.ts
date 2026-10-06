@@ -29,7 +29,7 @@ describe("GrantSift AI Intelligence & Writing Engine Upgrade", () => {
 
       expect(cleaned).not.toContain("—");
       expect(cleaned).not.toContain("--");
-      expect(cleaned).toContain("The market is growing, but trust is missing, causing delays.");
+      expect(cleaned).toContain("The market is growing; but trust is missing; causing delays.");
     });
 
     it("neutralizes prohibited AI buzzwords (fragmented, frontlines, leverage, etc.)", () => {

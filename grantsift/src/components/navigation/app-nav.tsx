@@ -11,10 +11,11 @@ export function AppNav({ email, isAdmin }: { email: string; isAdmin: boolean }) 
     { href: "/dashboard", label: "Dashboard" },
     { href: "/discover", label: "Discover" },
     { href: "/proposals", label: "Proposals & Apply" },
+    { href: "/financial-model", label: "Financial Model" },
+    { href: "/business-plan", label: "Business Plan" },
+    { href: "/sop-workbook", label: "SOP Workbook" },
     { href: "/tracker", label: "Pipeline Tracker" },
-    { href: "/workspace", label: "Organization OS" },
-    { href: "/marketplace", label: "Marketplace" },
-    { href: "/pricing", label: "Pricing & Pro" },
+    { href: "/workspace", label: "Org OS" },
   ];
 
   return (
@@ -46,14 +47,14 @@ export function AppNav({ email, isAdmin }: { email: string; isAdmin: boolean }) 
 
         <div className="flex items-center gap-3 text-xs text-ink-soft">
           <div className="xl:hidden flex items-center gap-1.5">
-            <Link href="/discover" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
-              Discover
+            <Link href="/financial-model" className="rounded-full px-2 py-1 font-semibold text-ink hover:bg-paper">
+              Finance
             </Link>
-            <Link href="/proposals" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
-              Proposals
+            <Link href="/business-plan" className="rounded-full px-2 py-1 font-semibold text-ink hover:bg-paper">
+              Plan
             </Link>
-            <Link href="/tracker" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
-              Tracker
+            <Link href="/sop-workbook" className="rounded-full px-2 py-1 font-semibold text-ink hover:bg-paper">
+              SOP
             </Link>
             <Link href="/workspace" className="rounded-full px-2.5 py-1 font-semibold text-ink hover:bg-paper">
               Org OS

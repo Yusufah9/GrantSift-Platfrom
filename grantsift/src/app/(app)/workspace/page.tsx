@@ -150,8 +150,32 @@ export default function OrganizationWorkspacePage() {
           )}
 
           <Link
+            href="/financial-model"
+            className="rounded bg-paper px-3 py-2 text-xs font-semibold border border-paper-line text-ink hover:border-ink/40 transition-all shadow-sm flex items-center gap-1.5"
+          >
+            <span>📊</span>
+            <span>Financial Model</span>
+          </Link>
+
+          <Link
+            href="/business-plan"
+            className="rounded bg-paper px-3 py-2 text-xs font-semibold border border-paper-line text-ink hover:border-ink/40 transition-all shadow-sm flex items-center gap-1.5"
+          >
+            <span>📋</span>
+            <span>Business Plan</span>
+          </Link>
+
+          <Link
+            href="/sop-workbook"
+            className="rounded bg-paper px-3 py-2 text-xs font-semibold border border-paper-line text-ink hover:border-ink/40 transition-all shadow-sm flex items-center gap-1.5"
+          >
+            <span>📑</span>
+            <span>BD SOP</span>
+          </Link>
+
+          <Link
             href="/database"
-            className="rounded bg-paper px-4 py-2 text-xs font-semibold border border-paper-line text-ink hover:border-ink/40 transition-all shadow-sm"
+            className="rounded bg-paper px-3 py-2 text-xs font-semibold border border-paper-line text-ink hover:border-ink/40 transition-all shadow-sm"
           >
             Grant Database
           </Link>
