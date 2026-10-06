@@ -8,6 +8,7 @@ import {
 } from "@/lib/services/grant-discovery-engine";
 import type { GrantOpportunity } from "@/lib/types/grant-discovery";
 import type { ProjectAnalysisProfile } from "@/lib/services/ai-matching-service";
+import { grantTrackerService } from "@/lib/services/grant-tracker-service";
 import { GrantCardVerified } from "./grant-card-verified";
 import { GrantIntelligenceModal } from "./grant-intelligence-modal";
 
@@ -69,11 +70,19 @@ export function FindGrantsEngine({
   };
 
   const handleSaveToTracker = (grant: GrantOpportunity) => {
+    grantTrackerService.saveOpportunityToTracker({
+      grantId: grant.id,
+      grantTitle: grant.grantName,
+      funderName: grant.funderName,
+      organizationName: organizationProfile?.orgName || "My Organization",
+      targetAmountUsd: grant.funding.maximumAward || grant.funding.typicalAward || 100000,
+      deadline: grant.deadline,
+    });
     if (!trackerSavedIds.includes(grant.id)) {
       setTrackerSavedIds((prev) => [...prev, grant.id]);
-      setSuccessToast(`"${grant.grantName}" added to your application tracker.`);
-      setTimeout(() => setSuccessToast(null), 3500);
     }
+    // Automatically navigate to the pipeline tracker
+    router.push("/tracker");
   };
 
   const handleSelectForProposal = (grant: GrantOpportunity, proposalType: string) => {

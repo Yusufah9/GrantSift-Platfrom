@@ -67,16 +67,50 @@ export interface TrackedGrantApplication {
   award?: AwardRecord;
 }
 
+const STORAGE_KEY = "grantsift_tracked_applications";
+
 export class GrantTrackerService {
   private applications: TrackedGrantApplication[] = [];
 
   constructor(initialApps?: TrackedGrantApplication[]) {
-    if (initialApps) {
+    if (initialApps && initialApps.length > 0) {
       this.applications = [...initialApps];
+    } else {
+      this.initStorage();
+    }
+  }
+
+  private initStorage(): void {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.applications = parsed;
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load tracked grants from storage:", e);
+      }
+    }
+  }
+
+  private persist(): void {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.applications));
+      } catch (e) {
+        console.error("Failed to persist tracked grants to storage:", e);
+      }
     }
   }
 
   listApplications(orgName?: string): TrackedGrantApplication[] {
+    if (typeof window !== "undefined" && this.applications.length === 0) {
+      this.initStorage();
+    }
     if (!orgName) return [...this.applications];
     return this.applications.filter((a) => a.organizationName.toLowerCase() === orgName.toLowerCase());
   }
@@ -94,6 +128,9 @@ export class GrantTrackerService {
     deadline?: string;
     missingDocuments?: string[];
   }): TrackedGrantApplication {
+    if (typeof window !== "undefined" && this.applications.length === 0) {
+      this.initStorage();
+    }
     const existing = this.applications.find((a) => a.grantId === params.grantId);
     if (existing) return existing;
 
@@ -108,11 +145,12 @@ export class GrantTrackerService {
       stage: "discovered",
       founderApprovalStatus: "none",
       missingDocuments: params.missingDocuments || ["Audited Financials"],
-      notes: "Saved from Grant Database.",
+      notes: "Saved from Grant Discovery Engine.",
       approvalHistory: [],
     };
 
     this.applications.unshift(newApp);
+    this.persist();
     return newApp;
   }
 
@@ -120,6 +158,7 @@ export class GrantTrackerService {
     const app = this.getApplicationById(applicationId);
     if (!app) throw new Error(`Application ${applicationId} not found.`);
     app.stage = newStage;
+    this.persist();
     return { ...app };
   }
 
@@ -130,6 +169,7 @@ export class GrantTrackerService {
       app.missingDocuments.push(documentName);
     }
     app.stage = "awaiting_documents";
+    this.persist();
     return { ...app };
   }
 
@@ -164,6 +204,7 @@ export class GrantTrackerService {
       app.founderApprovalStatus = "rejected";
     }
 
+    this.persist();
     return { ...app };
   }
 
@@ -183,6 +224,7 @@ export class GrantTrackerService {
     app.isExternalSubmission = params.isExternal;
     app.submissionUrl = params.submissionUrl;
     app.confirmationNumber = params.confirmationNumber;
+    this.persist();
     return { ...app };
   }
 }

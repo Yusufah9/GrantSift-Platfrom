@@ -9,7 +9,7 @@ import {
 
 export function FinancialModelBuilder() {
   const [inputs, setInputs] = useState<Required<FinancialModelInputs>>({
-    companyName: "GrantSift Technologies / 8thGear",
+    companyName: "GrantSift Enterprise Innovations",
     industry: "B2B SaaS / Enterprise Automation",
     stage: "Seed to Growth",
     currency: "₦",

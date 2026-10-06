@@ -62,4 +62,21 @@ describe("Universal Financial Model Engine", () => {
     expect(y5.ruleOf40).toBeGreaterThan(0);
     expect(y5.runwayMonths).toBeGreaterThan(12);
   });
+
+  it("exports fully linked Excel buffer containing formulas across sheets", async () => {
+    const { generateFinancialModelExcelBuffer, generateFinancialModelColabPythonScript } = await import(
+      "./financial-model-export"
+    );
+    const engine = new FinancialModelEngine({});
+    const buffer = await generateFinancialModelExcelBuffer(engine.toAssumptions());
+
+    expect(buffer).toBeDefined();
+    expect(buffer.length).toBeGreaterThan(5000);
+
+    const pythonScript = generateFinancialModelColabPythonScript(engine.toAssumptions());
+    expect(pythonScript).toContain("BarChart");
+    expect(pythonScript).toContain("openpyxl");
+    expect(pythonScript).toContain("Valuation!B25");
+    expect(pythonScript).not.toContain("Yusuf Yaru Umaru");
+  });
 });

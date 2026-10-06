@@ -228,8 +228,8 @@ export const DEFAULT_FINANCIAL_ASSUMPTIONS: FinancialAssumptions = {
   expansionRevenueRate: 0.12, // 12% expansion
 
   capTable: [
-    { shareholder: "Yusuf Yaru Umaru & Founding Team", role: "Founders / Management", sharesOwned: 6500000, ownershipPercent: 65.0 },
-    { shareholder: "Angel Syndicate & 8thGear Studio", role: "Early Studio Investor", sharesOwned: 2000000, ownershipPercent: 20.0 },
+    { shareholder: "Founding Team & Key Promoters", role: "Founders / Management", sharesOwned: 6500000, ownershipPercent: 65.0 },
+    { shareholder: "Angel Syndicate & Studio Investor", role: "Early Studio Investor", sharesOwned: 2000000, ownershipPercent: 20.0 },
     { shareholder: "Employee Stock Option Pool (ESOP)", role: "Key Employees & Advisors", sharesOwned: 1500000, ownershipPercent: 15.0 },
   ],
 
