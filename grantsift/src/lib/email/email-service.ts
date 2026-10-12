@@ -16,7 +16,7 @@ export class EmailService {
       text: `Hi ${fullName || "there"},\n\nWelcome to GrantSift! Please confirm your email address by opening this link:\n\n${confirmationLink}\n\nOnce verified, you will be onboarded to your dashboard immediately.\n\nIf you did not request this, you can safely ignore this email.\n\n— The GrantSift Team`,
       html: renderEmailTemplate({
         title: "Confirm Your Email",
-        previewText: "One click away from your GrantSift dashboard — verify your email now.",
+        previewText: "One click away from your GrantSift dashboard, verify your email now.",
         accentColor: "#B4661E",
         bodyHtml: `
           <p style="margin: 0 0 8px; font-size: 15px; line-height: 24px; color: #4B5049;">Hi <strong style="color: #191C19;">${safeName}</strong>,</p>
@@ -132,7 +132,7 @@ export class EmailService {
       text: `Hello,\n\nWe received a request to reset your GrantSift account password. Click the link below to set a new password:\n\n${resetLink}\n\nThis link is valid for 1 hour. If you did not request this, please ignore this email.\n\n— The GrantSift Team`,
       html: renderEmailTemplate({
         title: "Password Reset Request",
-        previewText: "We got your reset request — click to choose a new GrantSift password.",
+        previewText: "We got your reset request, click to choose a new GrantSift password.",
         accentColor: "#2E5C4B",
         bodyHtml: `
           <!-- Warning banner -->

@@ -5,9 +5,9 @@ describe("GrantDatabaseService", () => {
   const service = new GrantDatabaseService();
 
   it("filters grants by sector correctly", () => {
-    const res = service.search({ sector: "Clean Energy" }, true);
+    const res = service.search({ sector: "AI" }, true);
     expect(res.grants.length).toBeGreaterThan(0);
-    expect(res.grants.every((g) => g.sector === "Clean Energy")).toBe(true);
+    expect(res.grants.every((g) => g.sector === "AI")).toBe(true);
   });
 
   it("filters grants by country correctly", () => {
@@ -23,8 +23,8 @@ describe("GrantDatabaseService", () => {
   });
 
   it("retrieves a grant by slug", () => {
-    const grant = service.getGrantBySlug("sefa-catalyst-grant");
+    const grant = service.getGrantBySlug("msme-meta-ai-pitchathon-2026");
     expect(grant).not.toBeNull();
-    expect(grant?.funderName).toBe("African Development Bank (AfDB)");
+    expect(grant?.funderName).toContain("Meta");
   });
 });

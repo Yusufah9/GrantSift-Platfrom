@@ -5,17 +5,17 @@ describe("GrantMatchingService", () => {
   const service = new GrantMatchingService();
 
   const mockStartupQuery: MatchQuery = {
-    orgName: "SunGrow AgriTech",
+    orgName: "RumourShield AI",
     orgType: "Startup",
     country: "Nigeria",
-    sector: "Clean Energy",
-    fundingRequirement: 120000,
-    yearsOperating: 2,
+    sector: "AI",
+    fundingRequirement: 50000,
+    yearsOperating: 1,
     hasIncorporation: true,
     hasAuditedFinancials: true,
   };
 
-  it("matches an African clean energy startup with appropriate grants", () => {
+  it("matches an African AI & civic tech startup with appropriate grants", () => {
     const result = service.match(mockStartupQuery, true);
 
     expect(result.totalMatches).toBeGreaterThan(0);
@@ -23,7 +23,7 @@ describe("GrantMatchingService", () => {
     expect(result.isProUser).toBe(true);
     expect(result.requiresProUpgrade).toBe(false);
 
-    // Top match should be African Development Bank or Tony Elumelu
+    // Top match should have a high score and eligibility
     const topMatch = result.matches[0];
     expect(topMatch).toBeDefined();
     expect(topMatch!.matchScore).toBeGreaterThanOrEqual(70);
@@ -43,19 +43,19 @@ describe("GrantMatchingService", () => {
 
   it("provides transparent match reasons and flags potential gaps", () => {
     const queryWithGaps: MatchQuery = {
-      orgName: "New Non-Profit Clinic",
+      orgName: "New Civic Tech Initiative",
       orgType: "NGO",
       country: "Global",
-      sector: "Healthcare",
+      sector: "Civic Tech",
       fundingRequirement: 2000000, // Beyond typical grant limits
       yearsOperating: 0, // No operating history
       hasIncorporation: false,
     };
 
     const result = service.match(queryWithGaps, true);
-    const healthGrant = result.matches.find((m) => m.grant.sector === "Healthcare");
+    const civicGrant = result.matches.find((m) => m.grant.sector === "Civic Tech" || m.grant.sector === "AI");
 
-    expect(healthGrant).toBeDefined();
-    expect(healthGrant!.potentialGaps.some((g) => g.includes("Incorporation") || g.includes("Funding requirement") || g.includes("operating"))).toBe(true);
+    expect(civicGrant).toBeDefined();
+    expect(civicGrant!.potentialGaps.some((g) => g.includes("Incorporation") || g.includes("Funding requirement") || g.includes("operating"))).toBe(true);
   });
 });

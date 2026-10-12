@@ -76,7 +76,10 @@ export class GrantDiscoveryEngine {
     }
 
     // 2. Detect sector
-    if (q.includes("climate") || q.includes("clean energy") || q.includes("solar") || q.includes("energy") || q.includes("green")) {
+    if (q.includes("ai") || q.includes("artificial intelligence") || q.includes("misinformation") || q.includes("fact-check") || q.includes("fact check") || q.includes("rumour") || q.includes("rumor") || q.includes("civic") || q.includes("media") || q.includes("democracy") || q.includes("rumourshield")) {
+      filters.sector = "AI";
+      intent.detectedSector = "AI & Civic Tech";
+    } else if (q.includes("climate") || q.includes("clean energy") || q.includes("solar") || q.includes("energy") || q.includes("green")) {
       filters.sector = "Clean Energy";
       intent.detectedSector = "Clean Energy / Climate";
     } else if (q.includes("education") || q.includes("edtech") || q.includes("school") || q.includes("learning")) {
