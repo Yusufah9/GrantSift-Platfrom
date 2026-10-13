@@ -4,6 +4,7 @@ import { VERIFIED_GRANTS } from "@/lib/services/grant-discovery-service";
 import { STRATEGIC_FUNDERS } from "@/lib/services/funder-service";
 import type { GrantOpportunity } from "@/lib/types/grant-discovery";
 import { cleanPlainText } from "@/lib/ai/ai-text-sanitizer";
+import { AppError } from "@/lib/errors/app-error";
 import {
   MASTER_GRANT_WRITER_CORE,
   HUMAN_VOICE_RULES,
@@ -412,8 +413,8 @@ ${pastGranteesFormatted}`;
   }
 
   /**
-   * Generates a detailed, opportunity-specific grant proposal (10 distinct sections)
-   * grounded in applicant evidence, funder requirements, and zero-markdown formatting rules.
+   * Generates a detailed, opportunity-specific proposal grounded in applicant evidence,
+   * funder requirements, and document-type specific architectural guidelines.
    */
   async generateProposal(params: ProposalGenerationParams): Promise<{ title: string; content: string }> {
     const { type, orgName, industry, country, problemStatement, solutionStatement, fundingAmount, funderName, customAiPrompt } = params;
@@ -424,139 +425,127 @@ ${pastGranteesFormatted}`;
       .join(" ");
 
     const totalFunding = fundingAmount || 150000;
+    const targetFunder = funderName || "Institutional Grant Program";
 
-    const prompt = `Write a clear, detailed ${formattedType} that a busy reviewer will want to finish reading. It is for:
-Organization Name: ${orgName}
-Industry or Sector: ${industry}
-Country of Operation: ${country}
-Target Grant Program or Funder: ${funderName || "Institutional Grant Program"}
-Requested Funding: $${totalFunding.toLocaleString()} USD
-Problem Statement: ${problemStatement || "Addressing critical operational bottlenecks through reliable local solutions."}
-Proposed Solution: ${solutionStatement || "Deploying a community-anchored, practical operational model."}
-Target Beneficiaries: ${params.targetBeneficiaries || "Local communities, smallholder enterprises, and families"}
-${customAiPrompt ? `User Grant Writing Methodology:\n${customAiPrompt}` : ""}
-
-WRITING RULES:
-${HUMAN_VOICE_RULES}
-STRUCTURE:
-Use these 10 plain text section titles, each on its own line:
-   Section 1: Executive Summary and Alignment with Funder Priorities
-   Section 2: Problem Statement, Root Causes and the Situation Today
-   Section 3: Goals, SMART Objectives and Theory of Change
-   Section 4: Proposed Solution, How We Will Do It and Phased Work Packages
-   Section 5: Who Benefits and How Many
-   Section 6: Budget and Why Each Cost Is Needed
-   Section 7: Monitoring, Evaluation and Learning
-   Section 8: Risks and How We Will Handle Them
-   Section 9: Our Team, Governance and Track Record
-   Section 10: Post-Grant Transition Plan and Sustainability
-Open the Executive Summary and the Problem Statement with one short, real human moment drawn from the applicant data (a type of person, a place, what goes wrong for them). Do not invent names or quotes.
-Budget lines must add up exactly to $${totalFunding.toLocaleString()} USD. Mark any number that is not in the applicant data as "(estimate, to confirm)".`
+    const prompt = this.buildPromptForDocumentType(params, formattedType, totalFunding, targetFunder);
 
     try {
       const generatedContent = await this.gemini.generateText(prompt, "synthesis", GRANT_WRITER_SYSTEM_PROMPT);
-      const title = `${formattedType}: ${orgName} for ${funderName ?? "Institutional Grant Program"}`;
+      const title = `${formattedType}: ${orgName} for ${targetFunder}`;
       return { title, content: cleanPlainText(generatedContent) };
-    } catch {
-      return this.fallbackProposalDraft(params, formattedType);
+    } catch (err: any) {
+      console.error("AI proposal generation error:", err);
+      throw new AppError(
+        "GEMINI_ERROR",
+        `AI proposal generation failed: ${err?.message || "Gemini service unavailable. Please retry."}`
+      );
     }
   }
 
-  private fallbackProposalDraft(params: ProposalGenerationParams, formattedType: string): { title: string; content: string } {
-    const { orgName, industry, country, problemStatement, solutionStatement, fundingAmount, funderName } = params;
-    const title = `${formattedType}: ${orgName} for ${funderName ?? "Institutional Grant Program"}`;
-    const totalAward = fundingAmount ?? 150000;
-    const equipCost = Math.round(totalAward * 0.40);
-    const persCost = Math.round(totalAward * 0.28);
-    const opsCost = Math.round(totalAward * 0.16);
-    const meCost = Math.round(totalAward * 0.10);
-    const adminCost = totalAward - (equipCost + persCost + opsCost + meCost);
+  private buildPromptForDocumentType(
+    params: ProposalGenerationParams,
+    formattedType: string,
+    totalFunding: number,
+    targetFunder: string
+  ): string {
+    const { type, orgName, industry, country, problemStatement, solutionStatement, customAiPrompt, targetBeneficiaries } = params;
+    const baseContext = `Applicant Organization: ${orgName}
+Industry / Sector: ${industry}
+Country of Operations: ${country}
+Target Funder / Program: ${targetFunder}
+Total Funding Request: $${totalFunding.toLocaleString()} USD
+Problem Statement: ${problemStatement || "Addressing critical community and market gaps through verified local solutions."}
+Proposed Solution: ${solutionStatement || "Deploying practical, high-impact operational interventions."}
+Target Beneficiaries: ${targetBeneficiaries || "Community members, smallholders, and local enterprises in " + country}
+${customAiPrompt ? `User Grant Writing Methodology:\n${customAiPrompt}\n` : ""}
+WRITING RULES:
+${HUMAN_VOICE_RULES}`;
 
-    const problem = problemStatement?.trim();
-    const solution = solutionStatement?.trim();
-    const who = params.targetBeneficiaries?.trim() || `the people and small businesses ${orgName} already works with in ${country}`;
-    const funder = funderName ?? "this funding program";
-    const usd = (n: number) => `$${n.toLocaleString()} USD`;
+    switch (type) {
+      case "concept_note":
+        return `Write a compelling 2-3 page Concept Note for grant submission.
+${baseContext}
 
-    const content = `${title}
-Applicant Organization: ${orgName}
-Sector: ${industry}
-Where We Work: ${country}
-Amount Requested: ${usd(totalAward)}
-Funder: ${funder}
+STRUCTURE:
+Use these exact 7 section headings, each on its own line:
+Section 1: Executive Summary and Strategic Fit with ${targetFunder}
+Section 2: Problem Analysis and Local Evidence in ${country}
+Section 3: Project Objectives, Outputs and Expected Outcomes
+Section 4: Proposed Methodology and Phased Work Plan
+Section 5: Direct and Indirect Beneficiaries
+Section 6: Indicative Budget Allocation ($${totalFunding.toLocaleString()} USD)
+Section 7: Sustainability and Post-Project Viability
 
-Note to the team: this is a starting draft written without live research. Every number marked "(to confirm)" needs a source or a quote before we submit.
+Budget lines must total exactly $${totalFunding.toLocaleString()} USD. Use clear, active voice.`;
 
+      case "technical_proposal":
+        return `Write an authoritative Technical Proposal detailing methodology and technical architecture.
+${baseContext}
+
+STRUCTURE:
+Use these exact 7 section headings, each on its own line:
+Section 1: Technical Overview and Problem Architecture
+Section 2: Proposed Technology Stack and System Architecture
+Section 3: Technical Implementation Methodology and Work Breakdown
+Section 4: Technical Specifications, Quality Assurance and Data Governance
+Section 5: Technical Team Competencies and Governance Structure
+Section 6: Technical Risk Matrix and Mitigation Protocols
+Section 7: Deployment Milestones, Testing Protocols and Technical Deliverables
+
+Focus on architectural rigor, realistic technical milestones, and verifiable delivery.`;
+
+      case "financial_proposal":
+      case "budget_narrative":
+        return `Write an institutional Financial Proposal and Budget Narrative for grant review.
+${baseContext}
+
+STRUCTURE:
+Use these exact 7 section headings, each on its own line:
+Section 1: Financial Summary and Total Budget Request ($${totalFunding.toLocaleString()} USD)
+Section 2: Personnel and Human Resource Cost Justification
+Section 3: Capital Expenditure, Equipment and Tools Schedule
+Section 4: Direct Operational and Field Activity Costs
+Section 5: Monitoring, Evaluation and Audit Cost Allocation
+Section 6: Administrative Overhead and Indirect Cost Justification
+Section 7: Multi-Year Cash Flow Phasing and Post-Grant Financial Sustainability
+
+Every line item must include a clear calculation rationale. Total budget must equal $${totalFunding.toLocaleString()} USD.`;
+
+      case "business_proposal":
+        return `Write a high-impact Business Proposal suitable for commercial, co-funding, or strategic evaluation.
+${baseContext}
+
+STRUCTURE:
+Use these exact 7 section headings, each on its own line:
+Section 1: Commercial Executive Summary and Value Proposition
+Section 2: Market Need, Target Customer Segments and Addressable Market
+Section 3: Product or Service Solution and Competitive Differentiation
+Section 4: Business Model, Revenue Architecture and Pricing Strategy
+Section 5: Go-to-Market Strategy and Client Acquisition Channels
+Section 6: Operational Infrastructure and Organizational Capabilities
+Section 7: 3-Year Financial Forecast, Funding Requirements ($${totalFunding.toLocaleString()} USD) and Projected Returns
+
+Ground arguments in realistic commercial metrics and execution capability.`;
+
+      default:
+        return `Write a clear, comprehensive ${formattedType} for institutional grant evaluation.
+${baseContext}
+
+STRUCTURE:
+Use these 10 section headings, each on its own line:
 Section 1: Executive Summary and Alignment with Funder Priorities
-Think about one of ${who}. They wake up, go to work, and hit the same wall every week. ${problem ? problem : `In ${industry}, that wall is a gap we see in our daily work in ${country}.`}
-${orgName} exists to fix that. ${solution ? solution : `We have a practical plan to close the gap, and we have tested parts of it already.`}
-We are asking ${funder} for ${usd(totalAward)} over 24 months. The money pays for equipment, people, field work, and honest measurement. At the end, the work should pay for itself.
-Why ${funder}? Because what you fund and what we do point at the same problem. We will show that section by section.
-
-Section 2: Problem Statement, Root Causes and the Situation Today
-Here is the problem in plain words. ${problem ? problem : `People in our target group cannot get a basic service they need to earn and grow.`}
-It costs them time and money every week. We will add the exact local figures from our baseline survey (to confirm).
-Why does it keep happening? From our work, three reasons come up again and again:
-• Money: small operators can't raise the upfront cost of the tools they need.
-• Skills: there are too few trained people nearby to set up and repair things.
-• Trust: past programs started and stopped, so people are slow to sign up again.
-And if nothing changes, the gap gets wider. Prices go up, and the people with the least room to absorb it pay first.
-
+Section 2: Problem Statement, Root Causes and Context in ${country}
 Section 3: Goals, SMART Objectives and Theory of Change
-Our goal is simple. Raise the income of the people we serve, and keep it raised after the grant ends.
-• Objective 1: Set up the first working sites in our target areas by Month 6.
-• Objective 2: Train local operators to run and repair them by Month 12 (target number to confirm).
-• Objective 3: Cover running costs from service fees by Month 20.
-Theory of Change: if local operators get reliable tools, clear processes and repair skills, then downtime falls. When downtime falls, they earn more. When they earn more, they can pay a fair fee that keeps the service running.
+Section 4: Proposed Solution, Methodology and Phased Work Packages
+Section 5: Beneficiary Outreach and Social Impact Metrics
+Section 6: Itemized Budget and Cost Justification ($${totalFunding.toLocaleString()} USD)
+Section 7: Monitoring, Evaluation and Learning Framework
+Section 8: Risk Management and Contingency Planning
+Section 9: Organizational Track Record, Governance and Key Personnel
+Section 10: Post-Grant Transition Plan and Long-Term Sustainability
 
-Section 4: Proposed Solution, How We Will Do It and Phased Work Packages
-${solution ? solution : `Here's how it works.`} We break the work into four parts so the funder can see progress every quarter.
-• Work Package 1 (Months 1 to 3): Visit sites, get local permits, sign agreements with community groups, and buy equipment.
-• Work Package 2 (Months 4 to 9): Install, test and hand over the first sites. Train the first operators.
-• Work Package 3 (Months 10 to 18): Run at full pace. Track output and income for every participant.
-• Work Package 4 (Months 19 to 24): Bring in an independent reviewer, transfer assets to local owners, and share what we learned.
-
-Section 5: Who Benefits and How Many
-• Direct: ${who}. We will confirm the exact count from our enrolment list (to confirm).
-• Women and young people: at least half of training places and team roles go to them.
-• Indirect: families and nearby customers who get a closer, cheaper service.
-This links to UN Sustainable Development Goal 8 (decent work) and Goal 9 (infrastructure).
-
-Section 6: Budget and Why Each Cost Is Needed
-The full request is ${usd(totalAward)}. Here is where every dollar goes:
-• Equipment and tools: ${usd(equipCost)} (40%). This is the core of the work. Without it nothing runs.
-• People: ${usd(persCost)} (28%). A project lead, a field engineer and community officers for 24 months.
-• Field operations and transport: ${usd(opsCost)} (16%). Site setup, fuel, haulage and a repair reserve.
-• Monitoring, evaluation and audit: ${usd(meCost)} (10%). Baseline survey, mid-term check and an external audit.
-• Admin and overhead: ${usd(adminCost)} (6%). Compliance, insurance and reporting.
-Unit costs will be backed by supplier quotes in the data room before we submit.
-
-Section 7: Monitoring, Evaluation and Learning
-We measure before we start, so we can prove what changed.
-• Month 1: baseline survey of income and output.
-• Every quarter: check results against targets before the next payment is released.
-• Months 12 and 24: an independent reviewer visits sites without notice and checks the numbers.
-And we will share what didn't work, not only what did.
-
-Section 8: Risks and How We Will Handle Them
-• Exchange rate swings: we lock in equipment prices early and keep part of the budget in USD.
-• Supplier delays: we keep two approved suppliers for every key item.
-• Breakdowns: trained local technicians and a stock of spare parts on site.
-• Low sign-up: we start with community groups that already trust us.
-
-Section 9: Our Team, Governance and Track Record
-${orgName} is a registered organization in ${country}. Our team has run field projects here before (years and examples to confirm).
-• Money controls: a separate grant account, two signatories for every payment, and digital records.
-• Compliance: current tax clearance and past audit reports will be in the data room.
-
-Section 10: Post-Grant Transition Plan and Sustainability
-The grant starts the work. It should not have to keep it alive.
-• From Month 16: a small, fair service fee starts to cover running costs (amount to confirm with users).
-• By Month 20: fees cover maintenance and staff.
-• At Month 24: local groups own the equipment, so the service stays where it belongs.
-That's the plan. If ${funder} sees a gap, we'd rather hear it now and fix it.`;
-
-    return { title, content: cleanPlainText(content) };
+Budget lines must add up exactly to $${totalFunding.toLocaleString()} USD.`;
+    }
   }
 
 

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { grantDiscoveryService } from "@/lib/services/grant-discovery-service";
 import type { GrantOpportunity, FunderEntity, GrantSearchFilters } from "@/lib/types/grant-discovery";
 import { GrantOpportunityCard } from "@/components/grants/grant-opportunity-card";
 import { FunderEntityCard } from "@/components/grants/funder-entity-card";
+import { saveGrantToTrackerAction, removeGrantFromTrackerAction } from "@/app/(app)/tracker/actions";
 
 export default function GrantDatabasePage() {
   const [activeTab, setActiveTab] = useState<"grants" | "funders">("grants");
@@ -19,6 +21,30 @@ export default function GrantDatabasePage() {
 
   const stats = grantDiscoveryService.getDatabaseStats();
 
+  useEffect(() => {
+    async function loadSavedGrants() {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await (supabase as any)
+          .from("saved_grants")
+          .select("grant_id")
+          .eq("user_id", user.id);
+
+        if (data && Array.isArray(data)) {
+          setSavedGrantIds(data.map((row: any) => String(row.grant_id)));
+        }
+      } catch (err) {
+        console.warn("Could not load saved grants:", err);
+      }
+    }
+    loadSavedGrants();
+  }, []);
+
   const searchFilters: GrantSearchFilters = {
     query,
     sector: selectedSector,
@@ -30,15 +56,31 @@ export default function GrantDatabasePage() {
   const filteredGrants = grantDiscoveryService.searchGrants(searchFilters);
   const filteredFunders = grantDiscoveryService.searchFunders(query, selectedSector, selectedCountry);
 
-  const handleSaveGrant = (grant: GrantOpportunity) => {
-    if (!savedGrantIds.includes(grant.id)) {
+  const handleSaveGrant = async (grant: GrantOpportunity) => {
+    const isAlreadySaved = savedGrantIds.includes(grant.id);
+
+    if (isAlreadySaved) {
+      setSavedGrantIds((prev) => prev.filter((id) => id !== grant.id));
+      setSaveSuccessMessage(`"${grant.grantName}" removed from your Tracker.`);
+      await removeGrantFromTrackerAction(grant.id);
+      setTimeout(() => setSaveSuccessMessage(null), 4000);
+    } else {
       setSavedGrantIds((prev) => [...prev, grant.id]);
-      setSaveSuccessMessage(`"${grant.grantName}" added to your personal Grant Tracker.`);
+      setSaveSuccessMessage(`"${grant.grantName}" saved to your personal Grant Tracker.`);
+      await saveGrantToTrackerAction({
+        grantId: grant.id,
+        grantName: grant.grantName,
+        funderName: grant.funderName,
+        amountMax: grant.funding.maximumAward,
+        currency: grant.funding.currency,
+        deadline: grant.deadline,
+        notes: `Focus areas: ${grant.focusAreas.join(", ")}`,
+      });
       setTimeout(() => setSaveSuccessMessage(null), 4000);
     }
   };
 
-  const sectors = ["All", "AI", "Civic Tech", "Technology", "Online Safety", "Media", "Fact Checking"];
+  const sectors = ["All", "AI", "Civic Tech", "Technology", "Online Safety", "Media", "Healthcare", "Agriculture", "Climate"];
   const countries = ["All", "Nigeria", "Kenya", "Ghana", "South Africa", "Uganda", "Rwanda", "Global"];
   const orgTypes = ["all", "Startup", "SME", "NGO", "Nonprofit", "Social Enterprise", "Individual"];
   const stages = ["all", "Idea", "Prototype", "Pre-Seed", "Seed", "Early Stage", "Growth", "Scale-Up"];
@@ -46,42 +88,42 @@ export default function GrantDatabasePage() {
   return (
     <div className="space-y-8">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-paper-line pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-stamp-tint px-2.5 py-0.5 text-xs font-mono font-semibold uppercase text-stamp-dark">
-              RumourShield AI Verified Catalog
+            <span className="rounded-full bg-teal-50 border border-teal-200 px-2.5 py-0.5 text-xs font-mono font-semibold uppercase text-teal-800">
+              Verified Grant Catalog
             </span>
-            <span className="text-xs text-ink-faint">
-              &bull; {stats.verifiedGrantsCount} Qualified Opportunities &bull; Valid Through December 2026
+            <span className="text-xs text-slate-500">
+              &bull; {stats.verifiedGrantsCount} Qualified Opportunities &bull; Multi-Tenant Database
             </span>
           </div>
-          <h1 className="font-serif text-3xl font-bold tracking-tight text-ink mt-1.5">
+          <h1 className="font-serif text-3xl font-bold tracking-tight text-brand-900 mt-1.5">
             Grant &amp; Funder Database
           </h1>
-          <p className="text-sm text-ink-soft mt-1 max-w-3xl">
-            Verified, non-dilutive grant calls specifically aligned with <strong>RumourShield AI</strong> (fact-checking, rumour verification, scam/fraud detection, and civic technology) from Opportunity Square, MSME Africa, and global institutional portals.
+          <p className="text-sm text-slate-600 mt-1 max-w-3xl">
+            Explore verified non-dilutive grant calls, foundation deadlines, and institutional funds across technology, civil society, impact, and enterprise growth.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <Link
             href="/workspace?tab=research"
-            className="rounded bg-paper px-4 py-2 text-xs font-semibold border border-paper-line text-ink hover:border-ink/40 transition-all shadow-sm"
+            className="rounded-xl bg-white px-4 py-2 text-xs font-semibold border border-slate-200 text-slate-800 hover:border-slate-400 transition-all shadow-sm"
           >
             Live Web Research &rarr;
           </Link>
           <Link
             href="/tracker"
-            className="rounded bg-ink px-4 py-2 text-xs font-semibold text-paper hover:bg-stamp-dark transition-all shadow-sm"
+            className="rounded-xl bg-brand-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-all shadow-sm"
           >
-            My Grant Tracker
+            My Grant Tracker ({savedGrantIds.length})
           </Link>
         </div>
       </div>
 
       {saveSuccessMessage && (
-        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-xs font-semibold text-emerald-950 flex items-center justify-between gap-3 shadow-sm animate-fade-in">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-semibold text-emerald-950 flex items-center justify-between gap-3 shadow-sm animate-fade-in">
           <span>✓ {saveSuccessMessage}</span>
           <Link href="/tracker" className="underline hover:text-emerald-800">
             View in Tracker &rarr;
@@ -279,21 +321,21 @@ export default function GrantDatabasePage() {
       {/* Results View */}
       {activeTab === "grants" ? (
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs text-ink-soft">
+          <div className="flex items-center justify-between text-xs text-slate-600">
             <span>
-              Showing <strong>{filteredGrants.length}</strong> matching grants for RumourShield AI
+              Showing <strong>{filteredGrants.length}</strong> matching grant opportunities
             </span>
-            <span className="font-mono text-[11px] text-ink-faint">
-              Strict Verification &bull; No Stale Leads
+            <span className="font-mono text-[11px] text-slate-500">
+              Verified Calls &bull; Multi-Tenant Database
             </span>
           </div>
 
           {filteredGrants.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-paper-line bg-paper-raised p-12 text-center space-y-3">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center space-y-3">
               <span className="text-3xl">🔍</span>
-              <h3 className="font-serif text-lg font-bold text-ink">No grants match your filter</h3>
-              <p className="text-xs text-ink-soft max-w-sm mx-auto">
-                Try clearing your search query or selecting &quot;All&quot; sectors to view all 50 verified RumourShield grants.
+              <h3 className="font-serif text-lg font-bold text-slate-900">No grants match your filter</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Try clearing your search query or selecting &quot;All&quot; sectors to view all available verified grants.
               </p>
               <button
                 type="button"

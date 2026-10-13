@@ -25,26 +25,44 @@ export class GeminiService {
     return new GoogleGenerativeAI(key);
   }
 
+  private getCandidateModels(tier: ModelTier): string[] {
+    const preferred = MODEL_BY_TIER[tier] || "gemini-3.5-flash";
+    const fallbacks = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-flash-lite-latest", "gemini-3.8-flash"];
+    return Array.from(new Set([preferred, ...fallbacks]));
+  }
+
   async generateText(
     prompt: string,
     tier: ModelTier = "fast",
     systemInstruction?: string
   ): Promise<string> {
     const client = this.client();
-    if (client) {
-      const modelName = MODEL_BY_TIER[tier];
+    if (!client) {
+      throw new AppError("GEMINI_ERROR", "Gemini API key is not configured on the server.");
+    }
+
+    const candidateModels = this.getCandidateModels(tier);
+    let lastError: any = null;
+
+    for (const modelName of candidateModels) {
       try {
         const model = client.getGenerativeModel({
           model: modelName,
           ...(systemInstruction ? { systemInstruction } : {}),
         });
-        const result = await withTimeout(model.generateContent(prompt), 20_000);
-        return cleanPlainText(result.response.text());
-      } catch (err) {
-        console.warn("Gemini generateText error, falling back:", err);
+        const result = await withTimeout(model.generateContent(prompt), 30_000);
+        const text = result.response.text();
+        if (text && text.trim().length > 0) {
+          return cleanPlainText(text);
+        }
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`Gemini model ${modelName} failed, attempting next candidate:`, err?.message || err);
       }
     }
-    throw new Error("Gemini API key not configured or unreachable");
+
+    const errorMsg = lastError?.message || "Failed to generate text from Gemini API.";
+    throw new AppError("GEMINI_ERROR", `Gemini API generation failed: ${errorMsg}`);
   }
 
   async generateStructured<T>(params: {
@@ -58,36 +76,38 @@ export class GeminiService {
     const client = this.client();
 
     if (client) {
-      const modelName = MODEL_BY_TIER[tier];
-      try {
-        const model = client.getGenerativeModel({
-          model: modelName,
-          systemInstruction: `${systemPrompt}\n\nRespond with JSON only. No prose, no markdown fences.`,
-          generationConfig: { responseMimeType: "application/json" },
-        });
+      const candidateModels = this.getCandidateModels(tier);
+      for (const modelName of candidateModels) {
+        try {
+          const model = client.getGenerativeModel({
+            model: modelName,
+            systemInstruction: `${systemPrompt}\n\nRespond with JSON only. No prose, no markdown fences.`,
+            generationConfig: { responseMimeType: "application/json" },
+          });
 
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-          try {
-            const result = await withTimeout(model.generateContent(userPrompt), 15_000);
-            const text = result.response.text();
-            const parsedJson = safeJsonParse(text);
-            const parsed = schema.safeParse(parsedJson);
+          for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+              const result = await withTimeout(model.generateContent(userPrompt), 20_000);
+              const text = result.response.text();
+              const parsedJson = safeJsonParse(text);
+              const parsed = schema.safeParse(parsedJson);
 
-            if (parsed.success) {
-              return parsed.data;
-            }
-          } catch (err) {
-            if (isRateLimit(err) || isOverloaded(err)) {
-              if (attempt < maxRetries) {
-                await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-                continue;
+              if (parsed.success) {
+                return parsed.data;
               }
+            } catch (err) {
+              if (isRateLimit(err) || isOverloaded(err)) {
+                if (attempt < maxRetries) {
+                  await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+                  continue;
+                }
+              }
+              break;
             }
-            break;
           }
+        } catch {
+          // Try next candidate model
         }
-      } catch {
-        // Fall back gracefully to high-fidelity generator
       }
     }
 

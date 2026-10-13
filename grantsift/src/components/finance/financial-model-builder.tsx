@@ -7,32 +7,36 @@ import {
   FinancialModelOutputs,
 } from "@/lib/finance/financial-model-engine";
 
-export function FinancialModelBuilder() {
-  const [inputs, setInputs] = useState<Required<FinancialModelInputs>>({
-    companyName: "GrantSift Enterprise Innovations",
-    industry: "B2B SaaS / Enterprise Automation",
-    stage: "Seed to Growth",
-    currency: "₦",
-    dollarToNaira: 1450,
-    firstDateOfOperations: "2026-01-01",
-    forecastYears: 5,
-    initialCustomers: 120,
-    monthlyCustomerGrowthRate: 0.08,
-    annualChurnRate: 0.05,
-    monthlyArpu: 350000,
-    annualPriceEscalation: 0.05,
-    grossMarginPercent: 0.78,
-    paymentProcessingFeePercent: 0.029,
-    indirectExpensesPercentRevenue: 0.22,
-    effectiveTaxRate: 0.30,
-    riskFreeRate: 0.14,
-    creditSpread: 0.06,
-    terminalGrowthRate: 0.04,
-    debtToCapitalTarget: 0.20,
-    costOfEquity: 0.28,
-    targetAsk: 250_000_000,
-    sharesOutstanding: 10_000_000,
-  });
+export function FinancialModelBuilder({
+  initialInputs,
+}: {
+  initialInputs?: Partial<FinancialModelInputs>;
+} = {}) {
+  const [inputs, setInputs] = useState<Required<FinancialModelInputs>>(() => ({
+    companyName: initialInputs?.companyName || "My Organization",
+    industry: initialInputs?.industry || "Technology & Commercial Enterprise",
+    stage: initialInputs?.stage || "Seed to Growth",
+    currency: initialInputs?.currency || "$",
+    dollarToNaira: initialInputs?.dollarToNaira || 1500,
+    firstDateOfOperations: initialInputs?.firstDateOfOperations || "2026-01-01",
+    forecastYears: initialInputs?.forecastYears || 5,
+    initialCustomers: initialInputs?.initialCustomers || 100,
+    monthlyCustomerGrowthRate: initialInputs?.monthlyCustomerGrowthRate || 0.08,
+    annualChurnRate: initialInputs?.annualChurnRate || 0.05,
+    monthlyArpu: initialInputs?.monthlyArpu || 2500,
+    annualPriceEscalation: initialInputs?.annualPriceEscalation || 0.05,
+    grossMarginPercent: initialInputs?.grossMarginPercent || 0.75,
+    paymentProcessingFeePercent: initialInputs?.paymentProcessingFeePercent || 0.029,
+    indirectExpensesPercentRevenue: initialInputs?.indirectExpensesPercentRevenue || 0.20,
+    effectiveTaxRate: initialInputs?.effectiveTaxRate || 0.30,
+    riskFreeRate: initialInputs?.riskFreeRate || 0.12,
+    creditSpread: initialInputs?.creditSpread || 0.05,
+    terminalGrowthRate: initialInputs?.terminalGrowthRate || 0.04,
+    debtToCapitalTarget: initialInputs?.debtToCapitalTarget || 0.20,
+    costOfEquity: initialInputs?.costOfEquity || 0.25,
+    targetAsk: initialInputs?.targetAsk || 250_000,
+    sharesOutstanding: initialInputs?.sharesOutstanding || 10_000_000,
+  }));
 
   const [activeTab, setActiveTab] = useState<
     | "cover"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { calculateReadinessScore, type ScorecardInput } from "@/lib/services/scorecard-service";
 import { WebResearchPanel } from "@/components/research/web-research-panel";
@@ -11,6 +11,10 @@ import { aiMatchingService, type ProjectAnalysisProfile, type ProjectRunAnalysis
 import { GrantOpportunityCard } from "@/components/grants/grant-opportunity-card";
 import { FunderEntityCard } from "@/components/grants/funder-entity-card";
 import { FindGrantsEngine } from "@/components/discovery/find-grants-engine";
+import {
+  getWorkspaceOrganizationAction,
+  saveWorkspaceOrganizationAction,
+} from "@/app/(app)/workspace/actions";
 
 export default function OrganizationWorkspacePage() {
   const [activeTab, setActiveTab] = useState<
@@ -45,9 +49,45 @@ export default function OrganizationWorkspacePage() {
   // Project Run Analysis Results
   const [analysisReport, setAnalysisReport] = useState<ProjectRunAnalysisReport | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSavingOrg, setIsSavingOrg] = useState(false);
+  const [isLoadingOrg, setIsLoadingOrg] = useState(true);
 
   // User Tracker Saved Grants (PRD §27: Starts empty)
   const [savedGrants, setSavedGrants] = useState<any[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    getWorkspaceOrganizationAction().then((res) => {
+      if (!active) return;
+      setIsLoadingOrg(false);
+      if (res.success && res.org) {
+        setHasOrganization(true);
+        setOrgProfile({
+          projectName: res.org.name || "",
+          orgName: res.org.name || "",
+          orgType: res.org.org_type || "Startup",
+          country: res.org.country || "",
+          industry: res.org.industry || res.org.sector || "",
+          sector: res.org.sector || res.org.industry || "",
+          problemStatement: res.org.problem_statement || "",
+          solutionStatement: res.org.solution_statement || "",
+          targetBeneficiaries: res.org.target_beneficiaries || "",
+          stage: res.org.stage || "Seed",
+          fundingRequirement: Number(res.org.funding_currently_seeking) || 100000,
+          traction: "",
+          teamInfo: "",
+          hasIncorporation: true,
+          hasAuditedFinancials: false,
+        });
+      }
+      if (res.success && res.savedGrants) {
+        setSavedGrants(res.savedGrants);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Scorecard calculation based on actual org data
   const scorecardInput: ScorecardInput = {
@@ -73,10 +113,30 @@ export default function OrganizationWorkspacePage() {
 
   const scorecard = calculateReadinessScore(scorecardInput);
 
-  const handleCreateOrganization = (e: React.FormEvent) => {
+  const handleCreateOrganization = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgProfile.orgName.trim() || !orgProfile.country.trim()) {
       alert("Please provide at least Organization Name and Country.");
+      return;
+    }
+    setIsSavingOrg(true);
+    const res = await saveWorkspaceOrganizationAction({
+      orgName: orgProfile.orgName,
+      projectName: orgProfile.projectName || orgProfile.orgName,
+      country: orgProfile.country,
+      sector: orgProfile.sector,
+      industry: orgProfile.industry,
+      orgType: orgProfile.orgType,
+      fundingRequirement: orgProfile.fundingRequirement,
+      problemStatement: orgProfile.problemStatement,
+      solutionStatement: orgProfile.solutionStatement,
+      targetBeneficiaries: orgProfile.targetBeneficiaries,
+      hasIncorporation: orgProfile.hasIncorporation,
+      hasAuditedFinancials: orgProfile.hasAuditedFinancials,
+    });
+    setIsSavingOrg(false);
+    if (!res.success) {
+      alert(res.error || "Failed to save organization.");
       return;
     }
     setHasOrganization(true);
@@ -891,9 +951,10 @@ export default function OrganizationWorkspacePage() {
               </button>
               <button
                 type="submit"
-                className="rounded bg-stamp-dark px-5 py-2 text-xs font-semibold text-paper hover:bg-stamp transition-all shadow-sm"
+                disabled={isSavingOrg}
+                className="rounded bg-stamp-dark px-5 py-2 text-xs font-semibold text-paper hover:bg-stamp transition-all shadow-sm disabled:opacity-50"
               >
-                Save &amp; Open Workspace &rarr;
+                {isSavingOrg ? "Saving..." : "Save & Open Workspace →"}
               </button>
             </div>
           </form>

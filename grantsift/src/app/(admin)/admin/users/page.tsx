@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { AdminService } from "@/lib/services/admin-service";
-import { RoleSelect } from "@/components/admin/role-select";
+import { RoleBadge } from "@/components/admin/role-select";
 
 export default async function AdminUsersPage() {
   const supabase = await createClient();
@@ -28,7 +28,7 @@ export default async function AdminUsersPage() {
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-3">
-                  <RoleSelect userId={user.id} role={user.role} />
+                  <RoleBadge role={user.role} />
                 </td>
               </tr>
             ))}

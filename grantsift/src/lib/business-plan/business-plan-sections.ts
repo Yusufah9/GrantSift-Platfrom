@@ -43,11 +43,11 @@ export const BUSINESS_PLAN_SECTIONS: BusinessPlanSectionDef[] = [
       "Confidentiality notice and contact information",
     ],
     dataRequirements: ["Official corporate registration", "Verified corporate contacts"],
-    defaultContent: `8thGear Hub & Venture Studio
-Standard Operating Unit: Business Development & Project Development
+    defaultContent: `Executive Cover Page: [Company / Organization Name]
+Standard Operating Unit: Executive & Business Development
 Document: Institutional Investor-Grade Business Plan (5-Year Projection)
-Jurisdiction: Lagos, Nigeria & West Africa
-Prepared by: Yusuf Yaru Umaru (Growth Associate) with Dr. Seun & Mr. Damilola
+Jurisdiction: Regional & International Operations
+Prepared by: Executive Leadership & Strategic Advisory Team
 
 Confidentiality Notice:
 This document contains confidential operational, technical, and financial intelligence. Distributed strictly for authorized evaluation. All rights reserved.`,
@@ -110,10 +110,10 @@ This document contains confidential operational, technical, and financial intell
     ],
     dataRequirements: ["Traceable numbers backed by subsequent financial schedules"],
     defaultContent: `Business Concept:
-8thGear Hub & Venture Studio builds and scales high-impact technology ventures and delivers grant-funded enterprise development programs across West Africa. We connect grassroots MSMEs to institutional capital, enterprise technology, and structured market linkages.
+Our organization develops and scales high-impact commercial solutions and delivers structured enterprise programs. We connect community stakeholders to institutional capital, modern technology, and sustainable market linkages.
 
 Market Opportunity:
-Across West Africa, over 40 million micro, small, and medium enterprises face severe access-to-capital constraints and coordination bottlenecks. Our Serviceable Obtainable Market captures ₦412,000,000 in Year 5 revenue across venture acceleration fees, platform subscriptions, and program delivery retainers.
+Across our target market, millions of micro, small, and medium enterprises face severe access-to-capital constraints and coordination bottlenecks. Our Serviceable Obtainable Market captures projected growth across product subscriptions, service delivery, and enterprise retainers.
 
 Competitive Advantage:
 Unlike generic business incubators; our dual model pairs dedicated technical venture studios with high-velocity grant engineering. This allows our ventures to achieve capital efficiency without early equity dilution.
@@ -228,11 +228,11 @@ Mission Breakdown:
       "Ownership & Cap Table Summary",
     ],
     dataRequirements: ["Verified corporate filings and tax identification"],
-    defaultContent: `Company Entity: 8thGear Hub & Venture Studio Limited
-Registration: Incorporated under the Companies and Allied Matters Act, Federal Republic of Nigeria
-Headquarters: Lagos, Nigeria
-Operating Units: Business Development (BD), Project Development, Venture Studio, Technology Engineering.
-Board of Directors: Chaired by Dr. Seun with Mr. Damilola and Executive Management.`,
+    defaultContent: `Company Entity: [Company Entity Name] Limited
+Registration: Incorporated under applicable statutory corporate regulations
+Headquarters: Primary Operating Office
+Operating Units: Business Development, Project Execution, Product Engineering, Operations.
+Board of Directors: Executive Management and Strategic Advisors.`,
   },
   {
     id: "sec-10",
@@ -392,12 +392,12 @@ Our Solution: Integrated studio model providing non-dilutive grant capital pipel
     ],
     dataRequirements: ["Historical operational records and audited achievements"],
     defaultContent: `Historical Milestones:
-• 2024: Formal launch of 8thGear Venture Studio programs in Lagos.
-• 2025: Deployment of internal grant writing unit; achieved 18% grant win rate across ₦120M in applications.
-• 2026: Consolidation into unified BD & Project Devt SOP; release of GrantSift digital platform.
+• Year 1: Formal operational launch and foundational team recruitment.
+• Year 2: Deployment of core operational workflows; reached pilot scale and market validation.
+• Year 3: Consolidation into unified operating infrastructure; launch of proprietary digital solutions.
 Future Milestones:
-• Q1 2027: Surpass 50 funded ventures; roll out regional program hubs.
-• Q4 2028: Cross ₦300M in annual revenue with sustained 40%+ EBITDA margins.`,
+• Year 4: Surpass target venture / enterprise client volume; roll out regional hubs.
+• Year 5: Scale recurring revenue with sustained 40%+ EBITDA margins.`,
   },
   {
     id: "sec-18",
@@ -506,11 +506,11 @@ Conversion Funnel:
     ],
     dataRequirements: ["Crunchbase, PitchBook, and local ecosystem mapping"],
     defaultContent: `Competitive Comparison Matrix:
-• Criteria: Proposal Win Rate | Technical Engineering | Local Field Presence | Software Tooling
-• 8thGear & GrantSift: 25% | Full Studio | Strong (Lagos/Abuja) | Native Platform (Score: 8.8/10)
-• Traditional Consulting Firms: 15% | None (Advisory only) | Corporate only | None (Score: 6.2/10)
-• Generic Online Pitch Writers: <10% | None | Zero field presence | Freelance (Score: 4.5/10)
-Defensible Moats: Proprietary proposal library with 100+ proven section templates; direct relationships with donor evaluation panels.`,
+• Criteria: Service Delivery Win Rate | Technical Engineering | Regional Presence | Specialized Tooling
+• Our Organization: High-Velocity Execution | Dedicated Studio | Strong Presence | Proprietary Systems (Score: 8.8/10)
+• Traditional Consulting Firms: Standard Advisory | None (Advisory only) | Corporate only | Generic (Score: 6.2/10)
+• Generic Online Freelancers: Unpredictable | None | Zero field presence | Freelance (Score: 4.5/10)
+Defensible Moats: Proprietary methodology library with proven operational templates; direct alignment with institutional evaluation criteria.`,
   },
   {
     id: "sec-24",
@@ -567,7 +567,7 @@ Legal: Compliance with Nigeria Data Protection Act; response: strict data govern
 • Impact (Weight 20%, Score 9.5/10): 4,500+ jobs created; 62% female participation; measurable household income gains.
 • Opportunity (Weight 20%, Score 8.5/10): ₦5.94T TAM; scalable SaaS expansion across Sub-Saharan Africa.
 TOTAL URIO SCORE: 8.85 / 10.
-Investment Thesis: 8thGear represents a rare combination of high-margin software scalability and defensive cash flow generated through institutional development contracts.`,
+Investment Thesis: Our organization represents a rare combination of high-margin operational scalability and defensive recurring cash flow generated through institutional development contracts.`,
   },
   {
     id: "sec-27",
@@ -695,7 +695,7 @@ Target Investor Returns: 5.0x to 7.5x MOIC with an estimated IRR of 38% over 5 y
     ],
     dataRequirements: ["Legal counsel verified securities disclaimer"],
     defaultContent: `CONFIDENTIALITY & USE RESTRICTIONS:
-This business plan contains confidential and proprietary information of 8thGear Hub & Venture Studio Limited. By reviewing this document, the recipient agrees to maintain confidentiality and use it exclusively for evaluation purposes.
+This business plan contains confidential and proprietary information of [Company Name]. By reviewing this document, the recipient agrees to maintain confidentiality and use it exclusively for evaluation purposes.
 
 FORWARD-LOOKING STATEMENTS:
 Projections, estimates, and target outcomes represent forward-looking statements based on current operating assumptions. Actual operational results may vary based on macroeconomic, regulatory, and competitive factors.

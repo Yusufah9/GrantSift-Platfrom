@@ -161,8 +161,8 @@ export interface ModelOutputs {
 }
 
 export const DEFAULT_FINANCIAL_ASSUMPTIONS: FinancialAssumptions = {
-  companyName: "8thGear Hub & Venture Studio",
-  industry: "Venture Builder & Technology",
+  companyName: "Enterprise Innovations Studio",
+  industry: "Technology & Commercial Growth",
   stage: "Growth / Seed",
   currency: "NGN",
   dollarToNairaRate: 1500,
@@ -769,8 +769,8 @@ export class FinancialModelEngine {
 
   constructor(customInputs: FinancialModelInputs = {}) {
     this.inputs = {
-      companyName: customInputs.companyName || "GrantSift Technologies / 8thGear",
-      industry: customInputs.industry || "B2B SaaS / Enterprise Automation",
+      companyName: customInputs.companyName || "My Organization",
+      industry: customInputs.industry || "Technology & Enterprise Solutions",
       stage: customInputs.stage || "Seed to Growth",
       currency: customInputs.currency || "₦",
       dollarToNaira: customInputs.dollarToNaira || 1450,
@@ -997,14 +997,14 @@ export class FinancialModelEngine {
 
     const capTable = [
       { shareholder: "Founders & Executive Team", role: "Management", sharesOwned: Math.round(this.inputs.sharesOutstanding * 0.60), percentageOwnership: 0.60 },
-      { shareholder: "8thGear Venture Studio", role: "Venture Builder", sharesOwned: Math.round(this.inputs.sharesOutstanding * 0.20), percentageOwnership: 0.20 },
+      { shareholder: "Strategic Venture Partner", role: "Venture Builder", sharesOwned: Math.round(this.inputs.sharesOutstanding * 0.20), percentageOwnership: 0.20 },
       { shareholder: "Employee Stock Option Pool (ESOP)", role: "Talent Incentive", sharesOwned: Math.round(this.inputs.sharesOutstanding * 0.10), percentageOwnership: 0.10 },
       { shareholder: "Seed Strategic Investors", role: "Institutional Investors", sharesOwned: Math.round(this.inputs.sharesOutstanding * 0.10), percentageOwnership: 0.10 },
     ];
 
     const revenueStreams = [
-      { productName: "GrantSift Enterprise Tier", projections: annualProjections.map((p) => Math.round(p.revenue * 0.50)) },
-      { productName: "Consortium & Studio Tier", projections: annualProjections.map((p) => Math.round(p.revenue * 0.30)) },
+      { productName: "Core Enterprise Subscription", projections: annualProjections.map((p) => Math.round(p.revenue * 0.50)) },
+      { productName: "Professional & Implementation Services", projections: annualProjections.map((p) => Math.round(p.revenue * 0.30)) },
       { productName: "Advisory & Co-Bidding Fees", projections: annualProjections.map((p) => Math.round(p.revenue * 0.15)) },
       { productName: "Platform API & Verification Tokens", projections: annualProjections.map((p) => Math.round(p.revenue * 0.05)) },
     ];

@@ -1,26 +1,18 @@
-"use client";
-
-import { useTransition } from "react";
-import { setUserRoleAction } from "@/app/(admin)/admin/users/actions";
-
-export function RoleSelect({ userId, role }: { userId: string; role: "user" | "admin" }) {
-  const [isPending, startTransition] = useTransition();
-
+export function RoleBadge({ role }: { role: "user" | "admin" }) {
+  const isAdmin = role === "admin";
   return (
-    <select
-      defaultValue={role}
-      disabled={isPending}
-      onChange={(e) => {
-        const next = e.target.value as "user" | "admin";
-        startTransition(() => {
-          setUserRoleAction(userId, next);
-        });
-      }}
-      className="border border-paper-line bg-paper px-2 py-1 text-xs text-ink outline-none focus:border-stamp disabled:opacity-60"
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+        isAdmin
+          ? "bg-purple-50 text-purple-700 border border-purple-200"
+          : "bg-slate-100 text-slate-700 border border-slate-200"
+      }`}
     >
-      <option value="user">User</option>
-      <option value="admin">Admin</option>
-    </select>
+      {isAdmin ? "Admin" : "User"}
+    </span>
   );
 }
 
+export function RoleSelect({ role }: { userId?: string; role: "user" | "admin" }) {
+  return <RoleBadge role={role} />;
+}

@@ -19,7 +19,7 @@ const PROPOSAL_TYPES = [
 ];
 
 export function ProposalStudio({
-  orgName = "Rumour Shield",
+  orgName = "My Organization",
   country = "Nigeria",
   initialType = "concept_note",
 }: {
@@ -30,37 +30,28 @@ export function ProposalStudio({
   const [activeTab, setActiveTab] = useState<"narrative" | "questions" | "budget" | "readiness" | "visuals">("narrative");
   const [proposalType, setProposalType] = useState(initialType);
   const [funderName, setFunderName] = useState("African Development Bank (AfDB)");
+  const [industry, setIndustry] = useState("Technology & Sustainable Innovation");
+  const [applicantCountry, setApplicantCountry] = useState(country);
+  const [applicantOrgName, setApplicantOrgName] = useState(orgName);
   const [funderCeiling, setFunderCeiling] = useState(250000);
   const [currency, setCurrency] = useState("USD");
+  const [problemStatement, setProblemStatement] = useState(
+    "Local communities face systemic operational and economic bottlenecks with insufficient access to scalable, reliable tools."
+  );
+  const [solutionStatement, setSolutionStatement] = useState(
+    "Deploying a locally anchored, practical operational intervention with verifiable milestones and direct outreach."
+  );
+  const [targetBeneficiaries, setTargetBeneficiaries] = useState(
+    "Smallholder enterprises, local cooperatives, and underserved community members"
+  );
   const [isGenerating, setIsGenerating] = useState(false);
-  const [lastSaved, setLastSaved] = useState<string>("Autosaved just now");
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<string>("Ready to draft");
+  const [showConfigDrawer, setShowConfigDrawer] = useState(false);
 
   // Narrative text
-  const [title, setTitle] = useState(`Concept Note: ${orgName} for ${funderName}`);
-  const [narrativeContent, setNarrativeContent] = useState(`Concept Note for ${orgName}
-Applicant Organization: ${orgName}
-Jurisdiction: ${country}
-Target Program: ${funderName}
-Award Request: $150,000 USD
-
-1. Executive Summary
-${orgName} deploys a multilingual information verification system across ${country} to counter civic misinformation, preserve public trust, and protect local communities. With a requested award of $150,000 USD, this 24-month project will expand local language analysis into Yoruba, Hausa, Igbo, and Nigerian Pidgin, validating direct impact with over 150,000 citizens.
-
-2. Contextual Problem Analysis
-Misinformation across mobile communication channels in ${country} poses direct threats to public health stability, financial integrity, and community peace. Over 70% of citizens report encountering synthetic audio and distorted video claims without access to verified fact-checking tools in their native dialects.
-
-3. Phased Implementation Roadmap
-• Phase 1 (Months 1 to 6): Dataset localization and fine-tuning for regional dialect nuance.
-• Phase 2 (Months 7 to 18): Direct deployment with 20 community media partners and civic organizations.
-• Phase 3 (Months 19 to 24): Independent impact audit and transition to earned revenue through software verification licenses.
-
-4. Measurable Beneficiary Impact
-• Direct Beneficiaries: 25,000 verified community leaders and mobile fact-checkers trained.
-• Indirect Beneficiaries: 1,200,000 citizens receiving validated claim warnings.
-• Gender Disaggregation: 54% female civic volunteer ratio maintained across regional hubs.
-
-5. Sustainability Plan
-By Month 24, enterprise subscription fees from media houses and financial institutions will cover 100% of server infrastructure and ongoing team operations.`);
+  const [title, setTitle] = useState(`Proposal: ${applicantOrgName} for ${funderName}`);
+  const [narrativeContent, setNarrativeContent] = useState(`Select your proposal format and click "Synthesize Draft" to generate with Gemini AI.`);
 
   // Application Questions Form Builder
   const [questions, setQuestions] = useState<ApplicationQuestionItem[]>([
@@ -69,7 +60,7 @@ By Month 24, enterprise subscription fees from media houses and financial instit
       question: "Describe the specific community challenge and why current solutions are inadequate.",
       wordLimit: 250,
       isRequired: true,
-      response: "Local communities lack real-time verification tools in their native dialects. Existing fact-checking efforts remain centralized and English-only, allowing viral misinformation on mobile channels to incite panic before refutations can be published.",
+      response: "Local communities face severe operational bottlenecks with insufficient access to scalable infrastructure.",
       status: "ready",
     },
     {
@@ -77,7 +68,7 @@ By Month 24, enterprise subscription fees from media houses and financial instit
       question: "How will your project measure verifiable social and economic impact?",
       wordLimit: 300,
       isRequired: true,
-      response: "We track verified claims resolved within 15 minutes, engagement metrics across 20 localized partner hubs, and pre-and-post intervention media literacy tests across 2,500 survey respondents.",
+      response: "We track direct beneficiaries onboarded, milestone performance, and independent baseline surveys.",
       status: "ready",
     },
     {
@@ -85,18 +76,18 @@ By Month 24, enterprise subscription fees from media houses and financial instit
       question: "Explain your post-grant financial sustainability and commercial viability.",
       wordLimit: 200,
       isRequired: true,
-      response: "Post-grant sustainability is anchored in B2B claim verification APIs for regional fintechs and newsrooms, transitioning our cost structure away from philanthropic dependency by Month 24.",
+      response: "Sustainability is achieved through service licensing and recurring operational fees post-grant.",
       status: "ready",
     },
   ]);
 
   // Budget Items
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([
-    { id: "b1", category: "personnel", description: "Lead AI Engineer & NLP Specialist (24 mos)", unitCost: 2000, quantity: 24, totalCost: 48000, currency: "USD" },
-    { id: "b2", category: "personnel", description: "Community Verification Coordinator (24 mos)", unitCost: 1200, quantity: 24, totalCost: 28800, currency: "USD" },
-    { id: "b3", category: "equipment", description: "Edge Inference Servers & Local Testing Hardware", unitCost: 3500, quantity: 4, totalCost: 14000, currency: "USD" },
-    { id: "b4", category: "software", description: "Cloud Infrastructure, High-Memory GPU Compute & Storage", unitCost: 1000, quantity: 24, totalCost: 24000, currency: "USD" },
-    { id: "b5", category: "operations", description: "Field Verification Pilot & Community Workshops in 4 States", unitCost: 4000, quantity: 4, totalCost: 16000, currency: "USD" },
+    { id: "b1", category: "personnel", description: "Project Director & Lead Coordinator (24 mos)", unitCost: 2000, quantity: 24, totalCost: 48000, currency: "USD" },
+    { id: "b2", category: "personnel", description: "Field Implementation Specialist (24 mos)", unitCost: 1200, quantity: 24, totalCost: 28800, currency: "USD" },
+    { id: "b3", category: "equipment", description: "Core Technical Hardware & Field Equipment", unitCost: 3500, quantity: 4, totalCost: 14000, currency: "USD" },
+    { id: "b4", category: "software", description: "Cloud Infrastructure, Security & Data Storage", unitCost: 1000, quantity: 24, totalCost: 24000, currency: "USD" },
+    { id: "b5", category: "operations", description: "Field Verification Pilot & Community Workshops", unitCost: 4000, quantity: 4, totalCost: 16000, currency: "USD" },
     { id: "b6", category: "overhead", description: "Administrative, Auditing & Legal Compliance Overhead (10%)", unitCost: 13000, quantity: 1, totalCost: 13000, currency: "USD" },
   ]);
 
@@ -107,6 +98,7 @@ By Month 24, enterprise subscription fees from media houses and financial instit
 
   const handleGenerateAI = async () => {
     setIsGenerating(true);
+    setGenerationError(null);
     try {
       const res = await fetch("/api/ai", {
         method: "POST",
@@ -115,25 +107,31 @@ By Month 24, enterprise subscription fees from media houses and financial instit
           action: "generate_proposal",
           payload: {
             type: proposalType,
-            orgName,
-            country,
-            industry: "Artificial Intelligence & Civic Tech",
+            orgName: applicantOrgName,
+            country: applicantCountry,
+            industry,
             funderName,
-            fundingAmount: budgetTotal,
-            problemStatement: questions[0]?.response,
-            solutionStatement: "Deploying reliable multilingual claim verification directly to mobile users.",
+            fundingAmount: budgetTotal > 0 ? budgetTotal : funderCeiling,
+            problemStatement,
+            solutionStatement,
+            targetBeneficiaries,
           },
         }),
       });
 
       const data = await res.json();
-      if (data.success && data.data?.content) {
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Generation failed (HTTP ${res.status})`);
+      }
+
+      if (data.data?.content) {
         setNarrativeContent(cleanPlainText(data.data.content));
         setTitle(data.data.title || title);
-        setLastSaved(`Generated & saved at ${new Date().toLocaleTimeString()}`);
+        setLastSaved(`Generated at ${new Date().toLocaleTimeString()}`);
       }
-    } catch {
-      // Keep existing content
+    } catch (err: any) {
+      console.error("Proposal generation failed:", err);
+      setGenerationError(err?.message || "Failed to generate proposal via Gemini AI. Please check your network and retry.");
     } finally {
       setIsGenerating(false);
     }
@@ -188,64 +186,151 @@ By Month 24, enterprise subscription fees from media houses and financial instit
         </div>
       </div>
 
-      {/* Control Bar: Format & Funder Selection */}
-      <div className="grid gap-3 sm:grid-cols-3 rounded-2xl border border-paper-line bg-paper p-4 text-xs">
-        <div>
-          <label className="block text-[11px] font-bold text-ink-faint uppercase mb-1">Proposal Format</label>
-          <select
-            value={proposalType}
-            onChange={(e) => setProposalType(e.target.value)}
-            className="w-full rounded-xl border border-paper-line bg-paper-raised px-3 py-2 text-xs font-semibold text-ink outline-none"
+      {/* Error Alert with Retry */}
+      {generationError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs text-red-900 shadow-sm flex items-start justify-between gap-4 animate-fade-in">
+          <div className="flex items-start gap-2.5">
+            <span className="text-base text-red-600">⚠️</span>
+            <div>
+              <p className="font-bold text-red-950">AI Generation Notice</p>
+              <p className="mt-0.5 text-red-800 leading-relaxed">{generationError}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleGenerateAI}
+            disabled={isGenerating}
+            className="shrink-0 rounded-xl bg-red-600 px-3.5 py-1.5 font-bold text-white hover:bg-red-700 transition-all disabled:opacity-50"
           >
-            {PROPOSAL_TYPES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+            Retry Now
+          </button>
         </div>
+      )}
 
-        <div>
-          <label className="block text-[11px] font-bold text-ink-faint uppercase mb-1">Target Funder Program</label>
-          <input
-            type="text"
-            value={funderName}
-            onChange={(e) => setFunderName(e.target.value)}
-            className="w-full rounded-xl border border-paper-line bg-paper-raised px-3 py-2 text-xs font-semibold text-ink outline-none"
-          />
-        </div>
-
-        <div>
-          <label className="block text-[11px] font-bold text-ink-faint uppercase mb-1">Currency & Ceiling</label>
-          <div className="flex items-center gap-2">
+      {/* Control Bar: Format & Funder Selection */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 text-xs shadow-sm space-y-3">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Proposal Format</label>
             <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="rounded-xl border border-paper-line bg-paper-raised px-2.5 py-2 text-xs font-semibold text-ink outline-none"
+              value={proposalType}
+              onChange={(e) => setProposalType(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-teal-600"
             >
-              <option value="USD">USD ($)</option>
-              <option value="NGN">NGN (₦)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
+              {PROPOSAL_TYPES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Target Funder Program</label>
             <input
-              type="number"
-              value={funderCeiling}
-              onChange={(e) => setFunderCeiling(Number(e.target.value))}
-              className="w-full rounded-xl border border-paper-line bg-paper-raised px-3 py-2 text-xs font-semibold text-ink outline-none"
-              placeholder="Max award"
+              type="text"
+              value={funderName}
+              onChange={(e) => setFunderName(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-teal-600"
             />
           </div>
+
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Currency & Ceiling</label>
+            <div className="flex items-center gap-2">
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-teal-600"
+              >
+                <option value="USD">USD ($)</option>
+                <option value="NGN">NGN (₦)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+              </select>
+              <input
+                type="number"
+                value={funderCeiling}
+                onChange={(e) => setFunderCeiling(Number(e.target.value))}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-teal-600"
+                placeholder="Max award"
+              />
+            </div>
+          </div>
         </div>
+
+        {/* Project Context Toggle */}
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+          <button
+            type="button"
+            onClick={() => setShowConfigDrawer(!showConfigDrawer)}
+            className="flex items-center gap-1.5 font-bold text-teal-700 hover:text-teal-900"
+          >
+            <span>{showConfigDrawer ? "▼ Hide Project & Evidence Inputs" : "▶ Edit Organization & Evidence Inputs"}</span>
+          </button>
+          <span className="text-[11px] text-slate-400">
+            Applicant: {applicantOrgName} ({applicantCountry})
+          </span>
+        </div>
+
+        {showConfigDrawer && (
+          <div className="grid gap-3 pt-2 sm:grid-cols-2 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Applicant Organization</label>
+              <input
+                type="text"
+                value={applicantOrgName}
+                onChange={(e) => setApplicantOrgName(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 outline-none focus:border-teal-600"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Industry / Sector</label>
+              <input
+                type="text"
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 outline-none focus:border-teal-600"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Problem Statement</label>
+              <textarea
+                rows={2}
+                value={problemStatement}
+                onChange={(e) => setProblemStatement(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-800 outline-none focus:border-teal-600"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Proposed Solution</label>
+              <textarea
+                rows={2}
+                value={solutionStatement}
+                onChange={(e) => setSolutionStatement(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-800 outline-none focus:border-teal-600"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Target Beneficiaries</label>
+              <input
+                type="text"
+                value={targetBeneficiaries}
+                onChange={(e) => setTargetBeneficiaries(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 outline-none focus:border-teal-600"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-paper-line pb-2 text-xs font-semibold text-ink-soft overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs font-semibold text-slate-600 overflow-x-auto">
         <button
           type="button"
           onClick={() => setActiveTab("narrative")}
-          className={`rounded-xl px-4 py-2 transition-colors ${
-            activeTab === "narrative" ? "bg-ink text-paper" : "hover:bg-paper hover:text-ink"
+          className={`rounded-xl px-4 py-2 transition-all ${
+            activeTab === "narrative" ? "bg-brand-900 text-white shadow-sm" : "hover:bg-slate-100 hover:text-slate-900"
           }`}
         >
           📄 Proposal Narrative ({wordCount} words)
@@ -317,9 +402,26 @@ By Month 24, enterprise subscription fees from media houses and financial instit
                   navigator.clipboard.writeText(narrativeContent);
                   alert("Copied proposal draft to clipboard!");
                 }}
-                className="rounded-lg border border-paper-line bg-paper-raised px-3 py-1 font-semibold text-ink hover:bg-paper"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
               >
                 📋 Copy Text
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const blob = new Blob([`${title}\n\n${narrativeContent}`], { type: "text/markdown;charset=utf-8" });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `${title.replace(/[^a-zA-Z0-9_-]/g, "_")}.md`;
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                  document.body.removeChild(a);
+                }}
+                className="rounded-lg border border-teal-200 bg-teal-50 px-3 py-1 font-semibold text-teal-800 hover:bg-teal-100 transition-all shadow-sm"
+              >
+                📥 Download .md
               </button>
             </div>
           </div>

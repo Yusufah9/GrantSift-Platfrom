@@ -1,9 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { cleanPlainText, parseCleanTextBlocks } from "@/lib/ai/ai-text-sanitizer";
 import { AIService } from "@/lib/ai/ai-service";
 import { AIMatchingService } from "@/lib/services/ai-matching-service";
 import { ProposalStudioService } from "@/lib/services/proposal-studio-service";
 import { VERIFIED_GRANTS } from "@/lib/services/grant-discovery-service";
+import { GeminiService } from "@/lib/ai/gemini-service";
 
 describe("GrantSift AI Intelligence & Writing Engine Upgrade", () => {
   const aiService = new AIService();
@@ -121,6 +122,10 @@ describe("GrantSift AI Intelligence & Writing Engine Upgrade", () => {
 
   describe("Opportunity-Specific Proposal Writing & Fallback", () => {
     it("generates proposal free of asterisks, hashes, dashes, and banned words", async () => {
+      vi.spyOn(GeminiService.prototype, "generateText").mockResolvedValueOnce(
+        `### Executive Summary\n\n**Applicant Organization:** Shugaland — PropTech in Nigeria.\n\n### Problem Statement\nProperty seekers face lack of verified agents and secure transactions.\n\n### Proposed Solution\nBuilding verified agent infrastructure with transaction escrow protection.\n\n### Post-Grant Transition Plan\nSustained through fee revenues.`
+      );
+
       const proposal = await aiService.generateProposal({
         type: "grant_proposal",
         orgName: "Shugaland",

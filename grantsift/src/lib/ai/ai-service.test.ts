@@ -1,10 +1,18 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { AIService } from "./ai-service";
+import { GeminiService } from "./gemini-service";
 
 describe("AIService", () => {
   const aiService = new AIService();
 
   it("generates a structured grant proposal with key sections", async () => {
+    vi.spyOn(GeminiService.prototype, "generateText").mockResolvedValueOnce(
+      `Executive Summary: AquaHealth Labs provides early contaminant testing in Ghana.
+Problem Statement: Over 5 million rural residents lack reliable water testing.
+Proposed Solution: Mobile laboratory hubs deployed in regional centers.
+Post-Grant Transition Plan: Sustained via municipal water testing contracts.`
+    );
+
     const proposal = await aiService.generateProposal({
       type: "grant_proposal",
       orgName: "AquaHealth Labs",

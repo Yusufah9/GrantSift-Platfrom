@@ -30,21 +30,21 @@ export class BusinessPlanService {
    * Creates an initial business plan pre-populated with standard institutional defaults
    */
   public static createDefaultPlan(
-    companyName = "GrantSift Technologies / 8thGear Venture Studio",
-    sector = "B2B SaaS / Enterprise Workflow Automation",
-    geography = "Nigeria & Sub-Saharan Africa",
+    companyName = "Enterprise Innovations",
+    sector = "Technology & Operational Services",
+    geography = "Pan-African & Emerging Markets",
     currency = "₦",
     targetAsk = 250_000_000
   ): BusinessPlanProject {
     const sections: Record<string, string> = {};
     for (const sec of BUSINESS_PLAN_SECTIONS) {
-      sections[sec.id] = sec.defaultContent;
+      sections[sec.id] = sec.defaultContent.replace(/\[Company Name\]/g, companyName);
     }
 
     return {
       id: `bp-${Date.now()}`,
       companyName,
-      tagline: "Intelligent proposal development and grant acquisition operating infrastructure",
+      tagline: "High-impact enterprise growth and operational expansion platform",
       sector,
       geography,
       currency,
